@@ -7,7 +7,8 @@ export const t = {
     step3: "3. Layout Composition",
     step4: "4. Custom Color",
     step5: "5. Title Font",
-    step6: "6. Track Upload",
+    step6: "6. Image Editing",
+    step7: "7. Track Upload",
     
     styleBarsUp: "Bars (Up)",
     styleBarsDown: "Bars (Down)",
@@ -57,6 +58,14 @@ export const t = {
     amplitude: "Bar Amplitude / Height",
     amplitudeDesc: "Adjust the maximum height of the soundwave",
 
+    imgSize: "Image Size",
+    imgOffsetX: "Horizontal Offset",
+    imgOffsetY: "Vertical Offset",
+    imgRotation: "Rotation",
+    imgBorderWidth: "Border Width",
+    imgBorderColor: "Border Color",
+    imgBlur: "Image Blur",
+
     trackDesc: "Select MP3 or WAV files.",
     addAudio: "Add Audio Track(s) +",
     addCover: "Add Album Cover (Optional)",
@@ -81,7 +90,8 @@ export const t = {
     step3: "3. Layout de Composição",
     step4: "4. Cor Personalizada",
     step5: "5. Fonte do Título",
-    step6: "6. Upload de Faixas",
+    step6: "6. Edição de Imagem",
+    step7: "7. Upload de Faixas",
     
     styleBarsUp: "Barras (Cima)",
     styleBarsDown: "Barras (Baixo)",
@@ -130,6 +140,14 @@ export const t = {
 
     amplitude: "Amplitude / Altura da Barra",
     amplitudeDesc: "Ajusta a altura máxima vertical da onda sonora",
+
+    imgSize: "Tamanho da Imagem",
+    imgOffsetX: "Deslocamento Horizontal",
+    imgOffsetY: "Deslocamento Vertical",
+    imgRotation: "Rotação",
+    imgBorderWidth: "Espessura da Borda",
+    imgBorderColor: "Cor da Borda",
+    imgBlur: "Desfoque da Imagem",
 
     trackDesc: "Selecione arquivos MP3 ou WAV.",
     addAudio: "Adicionar Faixa(s) de Áudio +",

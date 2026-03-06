@@ -36,6 +36,16 @@ function App() {
   const [amplitude, setAmplitude] = useState(1.0);
   const [showTitle, setShowTitle] = useState(true);
   const [textStyle, setTextStyle] = useState('solid');
+  
+  // Image Transform Controls
+  const [imgSize, setImgSize] = useState(1.0);
+  const [imgOffsetX, setImgOffsetX] = useState(0);
+  const [imgOffsetY, setImgOffsetY] = useState(0);
+  const [imgRotation, setImgRotation] = useState(0);
+  const [imgBorderWidth, setImgBorderWidth] = useState(0);
+  const [imgBorderColor, setImgBorderColor] = useState('#ffffff');
+  const [imgBlur, setImgBlur] = useState(0);
+  
   const [lang, setLang] = useState('pt'); // Default to PT as requested
 
   const texts = t[lang];
@@ -308,6 +318,43 @@ function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Step 6: Image Editing */}
+              {albumCover && (
+                <div>
+                  <h3 style={{ marginBottom: '1rem' }}>{texts.step6}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgSize}: {Math.round(imgSize * 100)}%</label>
+                      <input type="range" min="0.2" max="3" step="0.05" value={imgSize} onChange={e => setImgSize(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgRotation}: {imgRotation}°</label>
+                      <input type="range" min="-180" max="180" step="1" value={imgRotation} onChange={e => setImgRotation(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgOffsetX}: {imgOffsetX}px</label>
+                      <input type="range" min="-500" max="500" step="5" value={imgOffsetX} onChange={e => setImgOffsetX(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgOffsetY}: {imgOffsetY}px</label>
+                      <input type="range" min="-500" max="500" step="5" value={imgOffsetY} onChange={e => setImgOffsetY(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgBlur}: {imgBlur}px</label>
+                      <input type="range" min="0" max="30" step="1" value={imgBlur} onChange={e => setImgBlur(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgBorderWidth}: {imgBorderWidth}px</label>
+                      <input type="range" min="0" max="20" step="1" value={imgBorderWidth} onChange={e => setImgBorderWidth(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgBorderColor}</label>
+                      <input type="color" value={imgBorderColor} onChange={e => setImgBorderColor(e.target.value)} style={{ width: '40px', height: '30px', border: 'none', background: 'none', cursor: 'pointer' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
                 <button 
@@ -345,6 +392,7 @@ function App() {
                   amplitude={amplitude}
                   showTitle={showTitle}
                   textStyle={textStyle}
+                  imgTransform={{ imgSize, imgOffsetX, imgOffsetY, imgRotation, imgBorderWidth, imgBorderColor, imgBlur }}
                   onRemove={() => removeTrack(index)}
                   texts={texts}
                 />

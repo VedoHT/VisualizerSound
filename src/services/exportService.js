@@ -6,29 +6,39 @@ let ffmpeg = null;
 export const initFFmpeg = async () => {
   if (ffmpeg) return ffmpeg;
   ffmpeg = new FFmpeg();
-  
-  // NOTE: Loading ffmpeg core requires setting up COOP and COEP headers on the server
-  // Or using a workaround. For Vite dev server, we can configure vite headers if needed.
   await ffmpeg.load();
   return ffmpeg;
 };
 
 export const createRecorder = (canvas, audioContext, sourceNode) => {
-  // Capture 30fps video from Canvas (doubles encoding speed vs 60fps)
+  // Capture 30fps video from Canvas
   const canvasStream = canvas.captureStream(30);
   
-  // V7: Video Only. Ignore Audio context destination completely.
+  // V13: Include Audio! Route audio through a MediaStreamDestination
+  const audioDest = audioContext.createMediaStreamDestination();
+  sourceNode.connect(audioDest);
+  
+  // Combine video + audio tracks
   const combinedStream = new MediaStream([
-    ...canvasStream.getVideoTracks()
+    ...canvasStream.getVideoTracks(),
+    ...audioDest.stream.getAudioTracks()
   ]);
 
   const chunks = [];
-  const options = { mimeType: 'video/webm; codecs=vp8' };
   
-  // Fallback to simpler mimeType if previous is not supported
-  const finalMimeType = MediaRecorder.isTypeSupported(options.mimeType) 
-    ? options.mimeType 
-    : 'video/webm';
+  // Try vp8 + opus for best compatibility
+  const candidates = [
+    'video/webm; codecs=vp8,opus',
+    'video/webm; codecs=vp8',
+    'video/webm'
+  ];
+  let finalMimeType = 'video/webm';
+  for (const mime of candidates) {
+    if (MediaRecorder.isTypeSupported(mime)) {
+      finalMimeType = mime;
+      break;
+    }
+  }
 
   const recorder = new MediaRecorder(combinedStream, { mimeType: finalMimeType });
 
@@ -53,13 +63,13 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
 
   await fm.writeFile(inputName, await fetchFile(webmBlob));
 
-  // Execute FFmpeg command to convert
-  // V7: Using ultrafast preset and -an (No Audio) for a silent .mp4
+  // V13: Include audio in the MP4 output (copy audio stream, encode video)
   await fm.exec([
     '-i', inputName,
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
-    '-an',
+    '-c:a', 'aac',
+    '-b:a', '192k',
     outputName
   ]);
 

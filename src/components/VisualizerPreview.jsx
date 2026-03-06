@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 're
 import { setupAudioContext, drawVisualizer } from '../utils/audioVisualizer';
 import { createRecorder, convertWebmToMp4, downloadBlob } from '../services/exportService';
 
-const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover, activeFX, coverPosition, customHexColor, titleFont, imageShape, amplitude, showTitle, textStyle, onRemove, texts }, ref) => {
+const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover, activeFX, coverPosition, customHexColor, titleFont, imageShape, amplitude, showTitle, textStyle, imgTransform, onRemove, texts }, ref) => {
   const canvasWrapRef = useRef(null);
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
@@ -41,12 +41,13 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
       imageShape: imageShape,
       amplitude: amplitude,
       showTitle: showTitle,
-      textStyle: textStyle
+      textStyle: textStyle,
+      imgTransform: imgTransform
     };
     if (!isPlayingRef.current) {
       draw(true); // Redraws screen live when user checks a box or changes color while paused
     }
-  }, [styleType, layoutType, albumCover, songTitle, activeFX, coverPosition, customHexColor, titleFont, imageShape, amplitude, showTitle, textStyle]);
+  }, [styleType, layoutType, albumCover, songTitle, activeFX, coverPosition, customHexColor, titleFont, imageShape, amplitude, showTitle, textStyle, imgTransform]);
   
   // Recorder refs
   const recorderRef = useRef(null);
@@ -142,9 +143,7 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
       setExportProgress(texts?.initializing || 'Initializing audio...');
       initAudio();
       
-      // V7: Silent Export
-      audioRef.current.muted = true;
-      
+      // Stop any current playback first
       if (isPlaying) {
         audioRef.current.pause();
         isPlayingRef.current = false;
@@ -156,20 +155,19 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
       
       try {
         setExportProgress(texts?.recording || 'Recording visualizer...');
-      const { recorder, chunks } = createRecorder(canvasRef.current, audioCtxRef.current, sourceNodeRef.current);
-      recorderRef.current = recorder;
-      chunksRef.current = chunks;
+        const { recorder, chunks } = createRecorder(canvasRef.current, audioCtxRef.current, sourceNodeRef.current);
+        recorderRef.current = recorder;
+        chunksRef.current = chunks;
       
-      recorder.onstop = async () => {
-        const webmBlob = new Blob(chunksRef.current, { type: 'video/webm' });
-        
+        recorder.onstop = async () => {
+          const webmBlob = new Blob(chunksRef.current, { type: 'video/webm' });
+          
           if (format === 'webm') {
             downloadBlob(webmBlob, `${songTitle}_${styleType}.webm`);
             setExportProgress('');
             setIsExporting(false);
             chunksRef.current = [];
             if (audioRef.current) {
-              audioRef.current.muted = false;
               audioRef.current.currentTime = 0;
               setCurrentTime(0);
             }
@@ -177,16 +175,16 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
             return;
           }
 
-        setExportProgress('Encoding MP4 (0%)...');
-        
-        try {
-          const mp4Blob = await convertWebmToMp4(
-            webmBlob, 
-            `visualizer_${styleType}_${layoutType}`,
-            (percent) => setExportProgress(`Encoding MP4 (${percent}%)...`)
-          );
-          downloadBlob(mp4Blob, `${songTitle}_${styleType}.mp4`);
-          setExportProgress('');
+          setExportProgress('Encoding MP4 (0%)...');
+          
+          try {
+            const mp4Blob = await convertWebmToMp4(
+              webmBlob, 
+              `visualizer_${styleType}_${layoutType}`,
+              (percent) => setExportProgress(`Encoding MP4 (${percent}%)...`)
+            );
+            downloadBlob(mp4Blob, `${songTitle}_${styleType}.mp4`);
+            setExportProgress('');
           } catch (err) {
             console.error('Error during conversion', err);
             setExportProgress('Export failed! See console.');
@@ -194,10 +192,7 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
           } finally {
             setIsExporting(false);
             chunksRef.current = [];
-            
-            // Re-enable sound
             if (audioRef.current) {
-              audioRef.current.muted = false;
               audioRef.current.currentTime = 0;
               setCurrentTime(0);
             }
@@ -205,13 +200,14 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
           }
         };
 
-      recorder.start();
-      
-      audioRef.current.play();
-      if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
-      }
-      
+        recorder.start();
+        
+        // V13: Play audio WITH sound - it feeds both speakers AND the MediaStreamDestination
+        audioRef.current.play();
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+        
         isPlayingRef.current = true;
         draw();
         
@@ -219,7 +215,6 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
         console.error(err);
         setExportProgress('Error starting recorder.');
         setIsExporting(false);
-        audioRef.current.muted = false;
         reject(err);
       }
     });

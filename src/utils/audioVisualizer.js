@@ -344,36 +344,72 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   ctx.imageSmoothingEnabled = true; // Recover from Pixelate
 
   // 1. Draw Images Immune to FX
+  const imgT = config.imgTransform || {};
+  const imgScale = imgT.imgSize || 1.0;
+  const imgOX = (imgT.imgOffsetX || 0) * (height / 1080);
+  const imgOY = (imgT.imgOffsetY || 0) * (height / 1080);
+  const imgRot = (imgT.imgRotation || 0) * (Math.PI / 180);
+  const imgBlurVal = imgT.imgBlur || 0;
+  const imgBW = (imgT.imgBorderWidth || 0) * (height / 1080);
+  const imgBC = imgT.imgBorderColor || '#ffffff';
+
   if (layout === 'clean' && albumImg && (style === 'circle' || style === 'wave-circle' || style === 'pulse')) {
       const paddingX = width * 0.1;
       const paddingY = height * 0.1;
       const vW = width - (paddingX * 2);
       const vH = height - (paddingY * 2);
-      const radius = Math.min(vW, vH) * 0.25;
+      const baseRadius = Math.min(vW, vH) * 0.25;
+      const radius = baseRadius * imgScale;
+      
+      const cx = (width / 2) + imgOX;
+      const cy = (height / 2) + imgOY;
       
       ctx.save();
-      ctx.beginPath();
+      ctx.translate(cx, cy);
+      ctx.rotate(imgRot);
       
+      if (imgBlurVal > 0) ctx.filter = `blur(${imgBlurVal}px)`;
+      
+      // Border
+      if (imgBW > 0) {
+        ctx.beginPath();
+        const shape = config.imageShape || 'circle';
+        if (shape === 'square') {
+          const r = 10 * (height / 1080);
+          ctx.roundRect(-radius - imgBW, -radius - imgBW, (radius + imgBW) * 2, (radius + imgBW) * 2, r);
+        } else if (shape === 'rounded') {
+          const r = Math.min(60 * (height / 1080), radius + imgBW);
+          ctx.roundRect(-radius - imgBW, -radius - imgBW, (radius + imgBW) * 2, (radius + imgBW) * 2, r);
+        } else {
+          ctx.arc(0, 0, radius * 0.95 + imgBW, 0, 2 * Math.PI);
+        }
+        ctx.fillStyle = imgBC;
+        ctx.fill();
+      }
+      
+      ctx.beginPath();
       const shape = config.imageShape || 'circle';
       if (shape === 'square') {
         const r = 10 * (height / 1080);
-        ctx.roundRect((width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2, r);
+        ctx.roundRect(-radius, -radius, radius * 2, radius * 2, r);
       } else if (shape === 'rounded') {
         const r = Math.min(60 * (height / 1080), radius);
-        ctx.roundRect((width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2, r);
+        ctx.roundRect(-radius, -radius, radius * 2, radius * 2, r);
       } else {
-        ctx.arc(width / 2, height / 2, radius * 0.95, 0, 2 * Math.PI); 
+        ctx.arc(0, 0, radius * 0.95, 0, 2 * Math.PI); 
       }
       
       ctx.clip();
-      ctx.drawImage(albumImg, (width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2);
+      ctx.drawImage(albumImg, -radius, -radius, radius * 2, radius * 2);
+      ctx.filter = 'none';
       ctx.restore();
 
   } else if (layout === 'mini-cover') {
       const padding = height * 0.15;
       const vY = padding * 1.5;
       const vH = height - (padding * 3);
-      const coverSize = height * 0.35; 
+      const baseCoverSize = height * 0.35;
+      const coverSize = baseCoverSize * imgScale;
       
       let coverY = (height - coverSize) / 2; 
       if (style.startsWith('bars') && style !== 'bars-sym' && style !== 'bars-down') {
@@ -389,43 +425,68 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
       const coverXLeft = width * 0.1;
       const coverXRight = width - coverSize - (width * 0.1);
       const imageX = coverPosition === 'right' ? coverXRight : coverXLeft;
+      
+      const cx = imageX + coverSize / 2 + imgOX;
+      const cy = coverY + coverSize / 2 + imgOY;
 
       if (albumImg) { 
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(imgRot);
+        
+        if (imgBlurVal > 0) ctx.filter = `blur(${imgBlurVal}px)`;
+        
         ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
         ctx.shadowBlur = Math.floor(30 * (height / 1080));
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = Math.floor(15 * (height / 1080));
         
-        ctx.save();
-        ctx.beginPath();
+        // Border
+        if (imgBW > 0) {
+          ctx.beginPath();
+          const shape = config.imageShape || 'square';
+          if (shape === 'circle') {
+            ctx.arc(0, 0, coverSize/2 + imgBW, 0, Math.PI * 2);
+          } else if (shape === 'rounded') {
+            const rad = Math.min(60 * (height / 1080), coverSize / 2 + imgBW);
+            ctx.roundRect(-coverSize/2 - imgBW, -coverSize/2 - imgBW, coverSize + imgBW*2, coverSize + imgBW*2, rad);
+          } else {
+            const rad = 10 * (height / 1080);
+            ctx.roundRect(-coverSize/2 - imgBW, -coverSize/2 - imgBW, coverSize + imgBW*2, coverSize + imgBW*2, rad);
+          }
+          ctx.fillStyle = imgBC;
+          ctx.fill();
+          ctx.shadowBlur = 0; // don't double-shadow border
+        }
         
+        ctx.beginPath();
         const shape = config.imageShape || 'square';
         if (shape === 'circle') {
-          ctx.arc(imageX + coverSize/2, coverY + coverSize/2, coverSize/2, 0, Math.PI * 2);
+          ctx.arc(0, 0, coverSize/2, 0, Math.PI * 2);
         } else if (shape === 'rounded') {
           const rad = Math.min(60 * (height / 1080), coverSize / 2);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+          ctx.roundRect(-coverSize/2, -coverSize/2, coverSize, coverSize, rad);
         } else {
           const rad = 10 * (height / 1080);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+          ctx.roundRect(-coverSize/2, -coverSize/2, coverSize, coverSize, rad);
         }
         
         ctx.clip();
-        ctx.drawImage(albumImg, imageX, coverY, coverSize, coverSize);
+        ctx.drawImage(albumImg, -coverSize/2, -coverSize/2, coverSize, coverSize);
+        ctx.filter = 'none';
         ctx.restore();
-        ctx.shadowBlur = 0;
       } else {
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
         const shape = config.imageShape || 'square';
         if (shape === 'circle') {
-          ctx.arc(imageX + coverSize/2, coverY + coverSize/2, coverSize/2, 0, Math.PI * 2);
+          ctx.arc(cx, cy, coverSize/2, 0, Math.PI * 2);
         } else if (shape === 'rounded') {
           const rad = Math.min(60 * (height / 1080), coverSize / 2);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+          ctx.roundRect(cx - coverSize/2, cy - coverSize/2, coverSize, coverSize, rad);
         } else {
           const rad = 10 * (height / 1080);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+          ctx.roundRect(cx - coverSize/2, cy - coverSize/2, coverSize, coverSize, rad);
         }
         ctx.fill();
       }
