@@ -201,19 +201,19 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   const numVisualBands = 120;
   const activeDataArray = getLogarithmicFrequencies(dataArray, numVisualBands);
 
-  // V12 Custom Amplitude Scaling 
-  const ampScalar = config.amplitude !== undefined ? config.amplitude : 1.0;
-  for (let i = 0; i < activeDataArray.length; i++) {
-    activeDataArray[i] = activeDataArray[i] * ampScalar;
-  }
-
-  // Sub-bass extraction for FX constraints
+  // Sub-bass extraction for FX constraints (MUST occur BEFORE amplitude scaling)
   let subBassSum = 0;
   for(let i=0; i<6; i++) {
     subBassSum += activeDataArray[i];
   }
   let subBassAvg = (subBassSum / 6) / 255;
   const subBassPow = Math.pow(subBassAvg, 1.5);
+
+  // V12 Custom Amplitude Scaling 
+  const ampScalar = config.amplitude !== undefined ? config.amplitude : 1.0;
+  for (let i = 0; i < activeDataArray.length; i++) {
+    activeDataArray[i] = activeDataArray[i] * ampScalar;
+  }
   
   // FX: Shake (Pre-render coordinate shift)
   let offsetX = 0;
