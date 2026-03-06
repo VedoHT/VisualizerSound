@@ -254,19 +254,13 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
       vY = paddingY;
       vW = width - (paddingX * 2);
       vH = height - (paddingY * 2);
-      
-      // Circle Cover Logic (Moved to Immune UI section at end of file)
 
     } else if (layout === 'mini-cover') {
       const padding = height * 0.15;
-      const coverSize = height * 0.35; // V11: Scaled Down from 0.70
-      const coverY = (height - coverSize) / 2; // V11: Vertical centering
-      
+      const coverSize = height * 0.35; 
       const coverXLeft = width * 0.1;
       const coverXRight = width - coverSize - (width * 0.1);
       
-      // Mini-cover image drawing moved to Immune UI section at end of file
-
       vX = coverPosition === 'right' ? padding * 2 : coverXLeft + coverSize + (width * 0.05);
       vY = padding * 1.5;
       vW = width - coverSize - (padding * 4) - (width * 0.05);
@@ -275,7 +269,6 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
     } else if (layout === 'title') {
       const paddingX = width * 0.15;
       const isBarsDown = style === 'bars-down';
-      
       const vizYFactor = isBarsDown ? 0.5 : 0.1;
 
       vX = paddingX;
@@ -287,7 +280,6 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
     // Mirroring Transformations
     ctx.save();
     if (scaleY === -1) {
-      // If we are mirroring, we flip the graphic directly under where it sits
       ctx.translate(0, vY * 2 + vH);
       ctx.scale(1, -1);
     }
@@ -344,7 +336,14 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
 
   // --- UI OVERLAYS (Immune to FX) ---
   
-  // 1. Draw Images Immune to FX so they don't get destroyed by Pixelate/VHS
+  // Isolate drawing state from any global alterations done by Glitch passes
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1.0;
+  ctx.shadowBlur = 0;
+  ctx.imageSmoothingEnabled = true; // Recover from Pixelate
+
+  // 1. Draw Images Immune to FX
   if (layout === 'clean' && albumImg && (style === 'circle' || style === 'wave-circle' || style === 'pulse')) {
       const paddingX = width * 0.1;
       const paddingY = height * 0.1;
@@ -436,6 +435,8 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
     ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
     ctx.shadowBlur = 0;
   }
+  
+  ctx.restore(); // Restore global context back to default clean state
 };
 
 // --- Child Drawers ---
