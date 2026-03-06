@@ -58,7 +58,9 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
   
   if (onProgress) {
     fm.on('progress', ({ progress }) => {
-      onProgress(Math.round(progress * 100));
+      // V17: Clamp progress between 0 and 1 and handle potential NaN/Infinity
+      const safeProgress = Math.min(1, Math.max(0, typeof progress === 'number' ? progress : 0));
+      onProgress(Math.round(safeProgress * 100));
     });
   }
   

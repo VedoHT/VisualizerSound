@@ -416,11 +416,20 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
           cancelAnimationFrame(animationRef.current);
         }}
         onEnded={() => {
-          setIsPlaying(false);
-          isPlayingRef.current = false;
-          cancelAnimationFrame(animationRef.current);
+          // V17: Wait 500ms before stopping the recorder to ensure clean MP4 termination
           if (isExporting && recorderRef.current?.state === 'recording') {
-            recorderRef.current.stop();
+            setTimeout(() => {
+              setIsPlaying(false);
+              isPlayingRef.current = false;
+              cancelAnimationFrame(animationRef.current);
+              if (recorderRef.current?.state === 'recording') {
+                recorderRef.current.stop();
+              }
+            }, 500);
+          } else {
+            setIsPlaying(false);
+            isPlayingRef.current = false;
+            cancelAnimationFrame(animationRef.current);
           }
         }} 
         style={{ display: 'none' }} 
