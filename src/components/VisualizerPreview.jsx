@@ -108,7 +108,15 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
 
     drawVisualizer(canvasRef.current, analyserRef.current, dataArrayRef.current, configRef.current, !isPlayingRef.current);
     if (!singleFrame) {
+      // V15: High-priority loop with fallback to ensure frames are NEVER skipped during export
       animationRef.current = requestAnimationFrame(() => draw(false));
+      
+      // Secondary safety timeout (mostly for background tabs / heavy export load)
+      if (isExporting) {
+        setTimeout(() => {
+          if (isPlayingRef.current && isExporting) draw(singleFrame);
+        }, 33);
+      }
     }
   };
 
@@ -202,7 +210,7 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
           }
         };
 
-        recorder.start();
+        recorder.start(1000); // V15: Flush data every 1 second to prevent stalling
         
         // V13: Play audio WITH sound - it feeds both speakers AND the MediaStreamDestination
         audioRef.current.play();

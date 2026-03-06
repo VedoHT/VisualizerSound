@@ -67,21 +67,25 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
 
   await fm.writeFile(inputName, await fetchFile(webmBlob));
 
-  // V14: Ultimate Compatibility for CapCut & NLEs
-  // -g 30 + -sc_threshold 0: Force keyframe every 1s (essential for scrubbing)
-  // -tune fastdecode: Optimizes for smooth playback on mobile/weaker hardware
-  // -crf 20: Stable quality / size balance
+  // V15: Ultimate Compatibility Fix for CapCut & NLEs
+  // Hard-locking Baseline profile and disabling B-frames (-bf 0) 
+  // This makes the file significantly "lighter" for editors to scroll through.
   await fm.exec([
     '-i', inputName,
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
+    '-profile:v', 'baseline',
+    '-level', '3.0',
     '-tune', 'fastdecode',
     '-pix_fmt', 'yuv420p',
     '-r', '30',
     '-g', '30',
     '-keyint_min', '30',
     '-sc_threshold', '0',
-    '-crf', '20',
+    '-bf', '0',
+    '-b:v', '5000k',
+    '-maxrate', '5000k',
+    '-bufsize', '10000k',
     '-c:a', 'aac',
     '-b:a', '192k',
     '-movflags', '+faststart',
