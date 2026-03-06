@@ -67,18 +67,19 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
 
   await fm.writeFile(inputName, await fetchFile(webmBlob));
 
-  // V15: Ultimate Compatibility Fix for CapCut & NLEs
-  // Hard-locking Baseline profile and disabling B-frames (-bf 0) 
-  // This makes the file significantly "lighter" for editors to scroll through.
+  // V16: Fixing MP4 Freezing & CapCut Compatibility
+  // Upgraded Level to 4.1 for 1080p support and added CFR enforcement.
+  // Using -fps_mode cfr (or -vsync cfr) to ensure video never stops mid-song.
   await fm.exec([
     '-i', inputName,
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
     '-profile:v', 'baseline',
-    '-level', '3.0',
+    '-level', '4.1',
     '-tune', 'fastdecode',
     '-pix_fmt', 'yuv420p',
     '-r', '30',
+    '-fps_mode', 'cfr', 
     '-g', '30',
     '-keyint_min', '30',
     '-sc_threshold', '0',
@@ -86,6 +87,8 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
     '-b:v', '5000k',
     '-maxrate', '5000k',
     '-bufsize', '10000k',
+    '-avoid_negative_ts', 'make_zero',
+    '-max_muxing_queue_size', '4096',
     '-c:a', 'aac',
     '-b:a', '192k',
     '-movflags', '+faststart',
