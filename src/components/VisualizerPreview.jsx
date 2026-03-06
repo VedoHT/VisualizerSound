@@ -387,7 +387,7 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onPlay={() => {
-          // V10 Fix: Force all other canvases to halt and mute when another song is played to prevent browser crashing
+          // V10 Fix: Force all other canvases to halt and mute when another song is played
           document.querySelectorAll('audio').forEach(el => {
             if (el !== audioRef.current && !el.paused) el.pause();
           });
@@ -402,6 +402,10 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
           }
         }}
         onPause={() => {
+          // CRITICAL: Do NOT kill the draw loop if we are mid-export.
+          // The recorder needs frames to keep flowing until onEnded fires.
+          if (isExporting) return;
+          
           setIsPlaying(false);
           isPlayingRef.current = false;
           cancelAnimationFrame(animationRef.current);
