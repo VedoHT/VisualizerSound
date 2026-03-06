@@ -63,13 +63,17 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
 
   await fm.writeFile(inputName, await fetchFile(webmBlob));
 
-  // V13: Include audio in the MP4 output (copy audio stream, encode video)
+  // V13: Include audio in the MP4 output + Fix Compatibility for CapCut
+  // Using -pix_fmt yuv420p and -r 30 for max compatibility
   await fm.exec([
     '-i', inputName,
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
+    '-pix_fmt', 'yuv420p',
+    '-r', '30',
     '-c:a', 'aac',
     '-b:a', '192k',
+    '-movflags', '+faststart',
     outputName
   ]);
 
