@@ -34,6 +34,8 @@ function App() {
   const [titleFont, setTitleFont] = useState('Montserrat');
   const [imageShape, setImageShape] = useState('square');
   const [amplitude, setAmplitude] = useState(1.0);
+  const [showTitle, setShowTitle] = useState(true);
+  const [textStyle, setTextStyle] = useState('solid');
   const [lang, setLang] = useState('pt'); // Default to PT as requested
 
   const texts = t[lang];
@@ -254,30 +256,55 @@ function App() {
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step5}</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', flex: 1, justifyContent: 'center' }}>
-                    <select 
-                      value={titleFont} 
-                      onChange={(e) => setTitleFont(e.target.value)}
-                      className="glass-button"
-                      style={{ textAlign: 'left', padding: '0.5rem', fontFamily: titleFont }}
-                    >
-                      <option value="Montserrat" style={{ fontFamily: 'Montserrat' }}>Montserrat</option>
-                      <option value="Outfit" style={{ fontFamily: 'Outfit' }}>Outfit</option>
-                      <option value="Inter" style={{ fontFamily: 'Inter' }}>Inter</option>
-                      <option value="Space Grotesk" style={{ fontFamily: 'Space Grotesk' }}>Space Grotesk</option>
-                      <option value="Oswald" style={{ fontFamily: 'Oswald' }}>Oswald</option>
-                      <option value="Playfair Display" style={{ fontFamily: 'Playfair Display' }}>Playfair Display</option>
-                      <option value="Bebas Neue" style={{ fontFamily: 'Bebas Neue' }}>Bebas Neue</option>
-                      <option value="Righteous" style={{ fontFamily: 'Righteous' }}>Righteous</option>
-                      <option value="Cinzel" style={{ fontFamily: 'Cinzel' }}>Cinzel</option>
-                      <option value="Orbitron" style={{ fontFamily: 'Orbitron' }}>Orbitron</option>
-                      <option value="Press Start 2P" style={{ fontFamily: 'Press Start 2P' }}>Press Start 2P</option>
-                      <option value="Audiowide" style={{ fontFamily: 'Audiowide' }}>Audiowide</option>
-                      <option value="Teko" style={{ fontFamily: 'Teko' }}>Teko</option>
-                      <option value="Syne" style={{ fontFamily: 'Syne' }}>Syne</option>
-                      <option value="Permanent Marker" style={{ fontFamily: 'Permanent Marker' }}>Permanent Marker</option>
-                      <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
-                      <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
-                    </select>
+                    
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={showTitle} 
+                        onChange={(e) => setShowTitle(e.target.checked)} 
+                      />
+                      {texts.showTitle}
+                    </label>
+
+                    {showTitle && (
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <select 
+                          value={titleFont} 
+                          onChange={(e) => setTitleFont(e.target.value)}
+                          className="glass-button"
+                          style={{ textAlign: 'left', padding: '0.5rem', fontFamily: titleFont, flex: 1 }}
+                        >
+                          <option value="Montserrat" style={{ fontFamily: 'Montserrat' }}>Montserrat</option>
+                          <option value="Outfit" style={{ fontFamily: 'Outfit' }}>Outfit</option>
+                          <option value="Inter" style={{ fontFamily: 'Inter' }}>Inter</option>
+                          <option value="Space Grotesk" style={{ fontFamily: 'Space Grotesk' }}>Space Grotesk</option>
+                          <option value="Oswald" style={{ fontFamily: 'Oswald' }}>Oswald</option>
+                          <option value="Playfair Display" style={{ fontFamily: 'Playfair Display' }}>Playfair Display</option>
+                          <option value="Bebas Neue" style={{ fontFamily: 'Bebas Neue' }}>Bebas Neue</option>
+                          <option value="Righteous" style={{ fontFamily: 'Righteous' }}>Righteous</option>
+                          <option value="Cinzel" style={{ fontFamily: 'Cinzel' }}>Cinzel</option>
+                          <option value="Orbitron" style={{ fontFamily: 'Orbitron' }}>Orbitron</option>
+                          <option value="Press Start 2P" style={{ fontFamily: 'Press Start 2P' }}>Press Start 2P</option>
+                          <option value="Audiowide" style={{ fontFamily: 'Audiowide' }}>Audiowide</option>
+                          <option value="Teko" style={{ fontFamily: 'Teko' }}>Teko</option>
+                          <option value="Syne" style={{ fontFamily: 'Syne' }}>Syne</option>
+                          <option value="Permanent Marker" style={{ fontFamily: 'Permanent Marker' }}>Permanent Marker</option>
+                          <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
+                          <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
+                        </select>
+
+                        <select
+                          value={textStyle}
+                          onChange={(e) => setTextStyle(e.target.value)}
+                          className="glass-button"
+                          style={{ padding: '0.5rem', flex: 1 }}
+                        >
+                          <option value="solid">{texts.textSolid}</option>
+                          <option value="neon">{texts.textNeon}</option>
+                          <option value="outline">{texts.textOutline}</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -316,6 +343,8 @@ function App() {
                   titleFont={titleFont}
                   imageShape={imageShape}
                   amplitude={amplitude}
+                  showTitle={showTitle}
+                  textStyle={textStyle}
                   onRemove={() => removeTrack(index)}
                   texts={texts}
                 />

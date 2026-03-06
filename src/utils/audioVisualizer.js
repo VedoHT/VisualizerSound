@@ -370,8 +370,22 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
       ctx.restore();
 
   } else if (layout === 'mini-cover') {
+      const padding = height * 0.15;
+      const vY = padding * 1.5;
+      const vH = height - (padding * 3);
       const coverSize = height * 0.35; 
-      const coverY = (height - coverSize) / 2; 
+      
+      let coverY = (height - coverSize) / 2; 
+      if (style.startsWith('bars') && style !== 'bars-sym' && style !== 'bars-down') {
+        coverY = vY + vH - coverSize;
+      } else if (style === 'bars-down') {
+        coverY = vY;
+      } else if (style.startsWith('wave') && style !== 'wave-sym' && style !== 'wave-circle') {
+        coverY = vY + vH - coverSize;
+      } else if (style === 'particles') {
+        coverY = vY + vH - coverSize;
+      }
+
       const coverXLeft = width * 0.1;
       const coverXRight = width - coverSize - (width * 0.1);
       const imageX = coverPosition === 'right' ? coverXRight : coverXLeft;
@@ -418,22 +432,49 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   }
 
   // 2. Draw Title Text
-  if (layout === 'title') {
-    const isBarsDown = style === 'bars-down';
-    const titleYFactor = isBarsDown ? 0.35 : 0.55;
+  if (config.showTitle) {
+    let titleYFactor = 0.55;
+    
+    if (layout === 'title') {
+      const isBarsDown = style === 'bars-down';
+      titleYFactor = isBarsDown ? 0.35 : 0.55;
+    } else {
+      titleYFactor = 0.85; // Bottom anchor for Clean and Mini-Cover
+    }
     
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = `rgba(255, 255, 255, 1.0)`;
+    
     const fontSize = 80 * (height / 1080);
     const fFamily = config.titleFont || 'Montserrat';
     ctx.font = `900 ${fontSize}px "${fFamily}", "Outfit", sans-serif`;
     
-    // Draw with slight shadow to stand out even against pure white flashbangs
+    const { textStyle = 'solid' } = config;
+
+    ctx.fillStyle = `rgba(255, 255, 255, 1.0)`;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
     ctx.shadowBlur = 20;
-    ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
-    ctx.shadowBlur = 0;
+
+    if (textStyle === 'neon') {
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = `hsl(${280 + hueShift}, 100%, 70%)`;
+        ctx.shadowBlur = 40 * (height / 1080);
+        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+        ctx.shadowBlur = 80 * (height / 1080); // inner stronger glow
+        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+    } else if (textStyle === 'outline') {
+        ctx.shadowBlur = 10 * (height / 1080);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 4 * (height / 1080);
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+        // tiny fill to ensure it has body
+        ctx.fillStyle = `rgba(0, 0, 0, 0.2)`;
+        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+    } else {
+        // Solid
+        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+    }
   }
   
   ctx.restore(); // Restore global context back to default clean state

@@ -44,6 +44,13 @@ export const t = {
     rounded: "Rounded",
     circle: "Circle",
 
+    textStyle: "Text FX",
+    textSolid: "Solid",
+    textNeon: "Neon Glow",
+    textOutline: "Outline",
+    
+    showTitle: "Show Song Title",
+
     primaryHue: "Primary Hue",
     hueDesc: "Affects gradients, neon glow, and particles",
 
@@ -110,6 +117,13 @@ export const t = {
     square: "Quadrado",
     rounded: "Arredondado",
     circle: "Círculo",
+
+    textStyle: "Efeito do Texto",
+    textSolid: "Sólido",
+    textNeon: "Brilho Neon",
+    textOutline: "Contorno",
+
+    showTitle: "Exibir o Título da Música",
 
     primaryHue: "Cor Primária",
     hueDesc: "Afeta os gradientes, brilho neon e partículas",
