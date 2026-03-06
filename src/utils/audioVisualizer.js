@@ -148,21 +148,27 @@ const applyAberration = (ctx, width, height, subBassRatio) => {
   ctx.restore();
 };
 
-const hexToHue = (hex) => {
-  if (!hex) return 280;
+// V13: Shift a hex color's hue by a given number of degrees
+const shiftHexColor = (hex, degrees) => {
+  if (!hex) return '#c084fc';
   let r = parseInt(hex.slice(1, 3), 16) / 255;
   let g = parseInt(hex.slice(3, 5), 16) / 255;
   let b = parseInt(hex.slice(5, 7), 16) / 255;
   let max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0;
+  let h = 0, s = 0, l = (max + min) / 2;
   if (max !== min) {
     let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     if (max === r) h = ((g - b) / d) + (g < b ? 6 : 0);
     else if (max === g) h = ((b - r) / d) + 2;
     else if (max === b) h = ((r - g) / d) + 4;
     h /= 6;
   }
-  return Math.round(h * 360);
+  h = ((h * 360 + degrees) % 360 + 360) % 360;
+  // ensure good saturation/lightness for visualizer
+  s = Math.max(s, 0.7);
+  l = Math.min(Math.max(l, 0.5), 0.75);
+  return `hsl(${Math.round(h)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
 };
 
 const applyPixelate = (ctx, width, height) => {
@@ -228,13 +234,15 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
     drawEmbers(ctx, width, height);
   }
 
-  // FX: Rainbow Hue Setup vs Custom Hex Color
-  let hueShift = 0;
+  // V13: Direct color resolution — no more broken hueShift offsets
+  let colorA, colorB;
   if (activeFX.rainbow) {
-    hueShift = (Date.now() / 20) % 360;
-  } else if (customHexColor) {
-    // We mathematically offset from the default 280 hue so we don't need to rewrite 6 rendering blocks
-    hueShift = hexToHue(customHexColor) - 280;
+    const hue = (Date.now() / 20) % 360;
+    colorA = `hsl(${hue}, 100%, 70%)`;
+    colorB = `hsl(${(hue + 80) % 360}, 100%, 70%)`;
+  } else {
+    colorA = customHexColor || '#c084fc';
+    colorB = config.secondaryHexColor || shiftHexColor(colorA, 60);
   }
 
   // Render Inner Graphics Wrapper
@@ -247,24 +255,26 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
     let vW = width;
     let vH = height;
 
+    // V13: Height multiplier for Clean and Cover modes
+    const barHeightScale = config.barHeight || 1;
+
     if (layout === 'clean') {
       const paddingX = width * 0.1;
       const paddingY = height * 0.1;
       vX = paddingX;
-      vY = paddingY;
+      // Center vertically within the original padding
+      vY = paddingY + (height * 0.8 * (1 - barHeightScale) * 0.5); 
       vW = width - (paddingX * 2);
-      vH = height - (paddingY * 2);
+      vH = height * 0.8 * barHeightScale;
 
     } else if (layout === 'mini-cover') {
       const padding = height * 0.15;
       const coverSize = height * 0.35; 
       const coverXLeft = width * 0.1;
-      const coverXRight = width - coverSize - (width * 0.1);
-      
+      vH = (height - (padding * 3)) * barHeightScale;
       vX = coverPosition === 'right' ? padding * 2 : coverXLeft + coverSize + (width * 0.05);
-      vY = padding * 1.5;
+      vY = (height - vH) / 2;
       vW = width - coverSize - (padding * 4) - (width * 0.05);
-      vH = height - (padding * 3);
 
     } else if (layout === 'title') {
       const paddingX = width * 0.15;
@@ -288,18 +298,18 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
     ctx.globalAlpha = fadeAlpha;
     
     if (activeFX.glow) {
-      ctx.shadowColor = `hsl(${280 + hueShift}, 100%, 70%)`;
+      ctx.shadowColor = colorA;
       ctx.shadowBlur = 20 * (height / 1080);
     } else {
       ctx.shadowBlur = 0;
     }
     
-    if (style.startsWith('bars')) drawBars(ctx, vW, vH, activeDataArray, style, hueShift);
-    else if (style === 'circle') drawCircle(ctx, vW, vH, activeDataArray, hueShift);
-    else if (style.startsWith('wave-circle')) drawWaveCircle(ctx, vW, vH, activeDataArray, hueShift);
-    else if (style.startsWith('wave')) drawWave(ctx, vW, vH, activeDataArray, style, hueShift);
-    else if (style === 'particles') drawParticles(ctx, vW, vH, activeDataArray, hueShift);
-    else if (style === 'pulse') drawPulse(ctx, vW, vH, activeDataArray, hueShift);
+    if (style.startsWith('bars')) drawBars(ctx, vW, vH, activeDataArray, style, colorA, colorB);
+    else if (style === 'circle') drawCircle(ctx, vW, vH, activeDataArray, colorA, colorB);
+    else if (style.startsWith('wave-circle')) drawWaveCircle(ctx, vW, vH, activeDataArray, colorA, colorB);
+    else if (style.startsWith('wave')) drawWave(ctx, vW, vH, activeDataArray, style, colorA, colorB);
+    else if (style === 'particles') drawParticles(ctx, vW, vH, activeDataArray, colorA, colorB);
+    else if (style === 'pulse') drawPulse(ctx, vW, vH, activeDataArray, colorA, colorB);
     
     ctx.restore();
     ctx.restore(); // end shake translate
@@ -495,46 +505,72 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   // 2. Draw Title Text
   if (config.showTitle) {
     let titleYFactor = 0.55;
-    
     if (layout === 'title') {
-      const isBarsDown = style === 'bars-down';
-      titleYFactor = isBarsDown ? 0.35 : 0.55;
+      titleYFactor = style === 'bars-down' ? 0.35 : 0.55;
     } else {
-      titleYFactor = 0.85; // Bottom anchor for Clean and Mini-Cover
+      titleYFactor = 0.85;
     }
     
+    const titleCol = config.titleColor || '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    
     const fontSize = 80 * (height / 1080);
     const fFamily = config.titleFont || 'Montserrat';
     ctx.font = `900 ${fontSize}px "${fFamily}", "Outfit", sans-serif`;
-    
     const { textStyle = 'solid' } = config;
+    const tx = width / 2;
+    const ty = height * titleYFactor;
+    const titleText = songTitle || 'Unknown Track';
 
-    ctx.fillStyle = `rgba(255, 255, 255, 1.0)`;
+    ctx.fillStyle = titleCol;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
     ctx.shadowBlur = 20;
 
     if (textStyle === 'neon') {
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = `hsl(${280 + hueShift}, 100%, 70%)`;
+        ctx.fillStyle = titleCol;
+        ctx.shadowColor = colorA;
         ctx.shadowBlur = 40 * (height / 1080);
-        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
-        ctx.shadowBlur = 80 * (height / 1080); // inner stronger glow
-        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+        ctx.fillText(titleText, tx, ty);
+        ctx.shadowBlur = 80 * (height / 1080);
+        ctx.fillText(titleText, tx, ty);
     } else if (textStyle === 'outline') {
         ctx.shadowBlur = 10 * (height / 1080);
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
         ctx.lineWidth = 4 * (height / 1080);
-        ctx.strokeStyle = '#ffffff';
-        ctx.strokeText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
-        // tiny fill to ensure it has body
-        ctx.fillStyle = `rgba(0, 0, 0, 0.2)`;
-        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+        ctx.strokeStyle = titleCol;
+        ctx.strokeText(titleText, tx, ty);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillText(titleText, tx, ty);
+    } else if (textStyle === 'shadow3d') {
+        ctx.shadowBlur = 0;
+        for (let l = 6; l >= 0; l--) {
+          const shade = Math.floor(40 + l * 20);
+          ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+          ctx.fillText(titleText, tx + l * 2 * (height/1080), ty + l * 2 * (height/1080));
+        }
+        ctx.fillStyle = titleCol;
+        ctx.fillText(titleText, tx, ty);
+    } else if (textStyle === 'glitch') {
+        const off = 3 * (height / 1080);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#ff0000';
+        ctx.fillText(titleText, tx - off, ty);
+        ctx.fillStyle = '#00ffff';
+        ctx.fillText(titleText, tx + off, ty);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = titleCol;
+        ctx.fillText(titleText, tx, ty);
+    } else if (textStyle === 'gradient') {
+        ctx.shadowBlur = 10;
+        const textWidth = ctx.measureText(titleText).width;
+        const grad = ctx.createLinearGradient(tx - textWidth/2, 0, tx + textWidth/2, 0);
+        grad.addColorStop(0, colorA);
+        grad.addColorStop(1, colorB);
+        ctx.fillStyle = grad;
+        ctx.fillText(titleText, tx, ty);
     } else {
-        // Solid
-        ctx.fillText(songTitle || 'Unknown Track', width / 2, height * titleYFactor);
+        ctx.fillText(titleText, tx, ty);
     }
   }
   
@@ -543,7 +579,7 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
 
 // --- Child Drawers ---
 
-const drawBars = (ctx, width, height, dataArray, style, hueShift) => {
+const drawBars = (ctx, width, height, dataArray, style, colorA, colorB) => {
   const sliceWidth = width / dataArray.length;
   const gap = sliceWidth * 0.2; 
   const barWidth = sliceWidth - gap;
@@ -561,8 +597,8 @@ const drawBars = (ctx, width, height, dataArray, style, hueShift) => {
     const barHeight = Math.max(0, normalizedVal * height);
     
     const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
-    gradient.addColorStop(0, `hsl(${280 + hueShift}, 100%, 70%)`);
-    gradient.addColorStop(1, `hsl(${200 + hueShift}, 100%, 70%)`);
+    gradient.addColorStop(0, colorA);
+    gradient.addColorStop(1, colorB);
     ctx.fillStyle = gradient;
     
     if (style === 'bars-blocks') {
@@ -583,7 +619,7 @@ const drawBars = (ctx, width, height, dataArray, style, hueShift) => {
   }
 };
 
-const drawCircle = (ctx, width, height, dataArray, hueShift) => {
+const drawCircle = (ctx, width, height, dataArray, colorA, colorB) => {
   const centerX = width / 2;
   const centerY = height / 2;
   
@@ -592,7 +628,7 @@ const drawCircle = (ctx, width, height, dataArray, hueShift) => {
 
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-  ctx.strokeStyle = `hsl(${200 + hueShift}, 50%, 80%)`;
+  ctx.strokeStyle = colorB;
   ctx.lineWidth = 1 * (height / 1080);
   ctx.stroke();
 
@@ -612,14 +648,14 @@ const drawCircle = (ctx, width, height, dataArray, hueShift) => {
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     
-    ctx.strokeStyle = `hsl(${280 + hueShift}, 100%, ${50 + normalizedVal * 50}%)`;
+    ctx.strokeStyle = colorA;
     ctx.lineWidth = 4 * (height / 1080);
     ctx.lineCap = 'round';
     ctx.stroke();
   }
 };
 
-const drawWaveCircle = (ctx, width, height, dataArray, hueShift) => {
+const drawWaveCircle = (ctx, width, height, dataArray, colorA, colorB) => {
   const centerX = width / 2;
   const centerY = height / 2;
   
@@ -627,7 +663,7 @@ const drawWaveCircle = (ctx, width, height, dataArray, hueShift) => {
   const maxAmplitude = Math.min(centerX, centerY) * 0.45;
 
   ctx.beginPath();
-  ctx.strokeStyle = `hsl(${200 + hueShift}, 100%, 70%)`;
+  ctx.strokeStyle = colorB;
   ctx.lineWidth = 4 * (height / 1080);
 
   for (let i = 0; i <= dataArray.length; i++) {
@@ -650,11 +686,15 @@ const drawWaveCircle = (ctx, width, height, dataArray, hueShift) => {
   }
 
   ctx.stroke();
-  ctx.fillStyle = `hsla(${280 + hueShift}, 100%, 70%, 0.2)`;
+  // Use colorA with transparency for fill
+  ctx.save();
+  ctx.globalAlpha = 0.2;
+  ctx.fillStyle = colorA;
   ctx.fill();
+  ctx.restore();
 };
 
-const drawWave = (ctx, width, height, dataArray, style, hueShift) => {
+const drawWave = (ctx, width, height, dataArray, style, colorA, colorB) => {
   const sliceWidth = width / (dataArray.length - 1);
   
   ctx.beginPath();
@@ -676,7 +716,7 @@ const drawWave = (ctx, width, height, dataArray, style, hueShift) => {
     }
   }
 
-  ctx.strokeStyle = `hsl(${200 + hueShift}, 100%, 70%)`;
+  ctx.strokeStyle = colorB;
   ctx.lineWidth = Math.max(2, 4 * (height / 1080));
   ctx.stroke();
   
@@ -698,23 +738,23 @@ const drawWave = (ctx, width, height, dataArray, style, hueShift) => {
           ctx.lineTo(exactX, y);
         }
       }
-      ctx.strokeStyle = `hsl(${280 + hueShift}, 100%, 70%)`;
+      ctx.strokeStyle = colorA;
       ctx.stroke();
     }
     
     if (style === 'wave') {
       ctx.lineTo(width, height);
       ctx.lineTo(0, height);
-      const gradient = ctx.createLinearGradient(0, height/2, 0, height);
-      gradient.addColorStop(0, `hsla(${200 + hueShift}, 100%, 70%, 0.5)`);
-      gradient.addColorStop(1, `hsla(${200 + hueShift}, 100%, 70%, 0)`);
-      ctx.fillStyle = gradient;
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = colorB;
       ctx.fill();
+      ctx.restore();
     }
   }
 };
 
-const drawParticles = (ctx, width, height, dataArray, hueShift) => {
+const drawParticles = (ctx, width, height, dataArray, colorA, colorB) => {
   const sliceWidth = width / dataArray.length;
   const circleRadiusBase = 4 * (height / 1080);
   
@@ -729,14 +769,16 @@ const drawParticles = (ctx, width, height, dataArray, hueShift) => {
     
     ctx.beginPath();
     ctx.arc(x, height - amplitude - circleRadiusBase, circleRadiusBase * (0.8 + normalizedVal * 2), 0, 2 * Math.PI);
-    ctx.fillStyle = `hsl(${220 + hueShift + (normalizedVal * 60)}, 100%, 70%)`;
+    // Blend between colorA and colorB based on frequency position
+    const t = i / dataArray.length;
+    ctx.fillStyle = t < 0.5 ? colorA : colorB;
     ctx.fill();
     
     x += sliceWidth;
   }
 };
 
-const drawPulse = (ctx, width, height, dataArray, hueShift) => {
+const drawPulse = (ctx, width, height, dataArray, colorA, colorB) => {
   const centerX = width / 2;
   const centerY = height / 2;
   
@@ -753,17 +795,20 @@ const drawPulse = (ctx, width, height, dataArray, hueShift) => {
   for (let w = 0; w < 3; w++) {
     ctx.beginPath();
     ctx.arc(centerX, centerY, pulseRadius + (w * subBassAvg * 50 * (height / 1080)), 0, 2 * Math.PI);
-    ctx.strokeStyle = `hsla(${280 + hueShift}, 100%, 70%, ${0.4 - (w * 0.1)})`;
+    ctx.save();
+    ctx.globalAlpha = 0.4 - (w * 0.1);
+    ctx.strokeStyle = colorA;
     ctx.lineWidth = (4 - w) * (height / 1080);
     ctx.stroke();
+    ctx.restore();
   }
 
   ctx.beginPath();
   ctx.arc(centerX, centerY, pulseRadius, 0, 2 * Math.PI);
   const gradient = ctx.createRadialGradient(centerX, centerY, baseRadius * 0.5, centerX, centerY, pulseRadius);
   gradient.addColorStop(0, '#ffffff');
-  gradient.addColorStop(0.5, `hsl(${200 + hueShift}, 100%, 70%)`);
-  gradient.addColorStop(1, `hsl(${280 + hueShift}, 100%, 70%)`);
+  gradient.addColorStop(0.5, colorB);
+  gradient.addColorStop(1, colorA);
   ctx.fillStyle = gradient;
   ctx.fill();
 };

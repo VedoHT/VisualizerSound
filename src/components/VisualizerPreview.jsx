@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 're
 import { setupAudioContext, drawVisualizer } from '../utils/audioVisualizer';
 import { createRecorder, convertWebmToMp4, downloadBlob } from '../services/exportService';
 
-const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover, activeFX, coverPosition, customHexColor, titleFont, imageShape, amplitude, showTitle, textStyle, imgTransform, onRemove, texts }, ref) => {
+const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover, activeFX, coverPosition, customHexColor, secondaryHexColor, titleColor, titleFont, imageShape, amplitude, showTitle, textStyle, imgTransform, onRemove, texts }, ref) => {
   const canvasWrapRef = useRef(null);
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
@@ -37,6 +37,8 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
       activeFX: activeFX,
       coverPosition: coverPosition,
       customHexColor: customHexColor,
+      secondaryHexColor: secondaryHexColor,
+      titleColor: titleColor,
       titleFont: titleFont,
       imageShape: imageShape,
       amplitude: amplitude,
@@ -47,7 +49,7 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
     if (!isPlayingRef.current) {
       draw(true); // Redraws screen live when user checks a box or changes color while paused
     }
-  }, [styleType, layoutType, albumCover, songTitle, activeFX, coverPosition, customHexColor, titleFont, imageShape, amplitude, showTitle, textStyle, imgTransform]);
+  }, [styleType, layoutType, albumCover, songTitle, activeFX, coverPosition, customHexColor, secondaryHexColor, titleColor, titleFont, imageShape, amplitude, showTitle, textStyle, imgTransform]);
   
   // Recorder refs
   const recorderRef = useRef(null);

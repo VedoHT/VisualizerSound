@@ -49,14 +49,21 @@ export const t = {
     textSolid: "Solid",
     textNeon: "Neon Glow",
     textOutline: "Outline",
+    textShadow3d: "Shadow 3D",
+    textGlitch: "RGB Glitch",
+    textGradient: "Gradient",
     
     showTitle: "Show Song Title",
+    titleColor: "Title Color",
+    secondaryColor: "Secondary Color",
+    secondaryColorDesc: "Used for gradients and alternating elements",
 
     primaryHue: "Primary Hue",
     hueDesc: "Affects gradients, neon glow, and particles",
 
     amplitude: "Bar Amplitude / Height",
     amplitudeDesc: "Adjust the maximum height of the soundwave",
+    barHeight: "Bar Limit (%)",
 
     imgSize: "Image Size",
     imgOffsetX: "Horizontal Offset",
@@ -132,14 +139,21 @@ export const t = {
     textSolid: "Sólido",
     textNeon: "Brilho Neon",
     textOutline: "Contorno",
+    textShadow3d: "Sombra 3D",
+    textGlitch: "Glitch RGB",
+    textGradient: "Gradiente",
 
     showTitle: "Exibir o Título da Música",
+    titleColor: "Cor do Título",
+    secondaryColor: "Cor Secundária",
+    secondaryColorDesc: "Usada em gradientes e elementos alternados",
 
     primaryHue: "Cor Primária",
     hueDesc: "Afeta os gradientes, brilho neon e partículas",
 
     amplitude: "Amplitude / Altura da Barra",
     amplitudeDesc: "Ajusta a altura máxima vertical da onda sonora",
+    barHeight: "Limite das Barras (%)",
 
     imgSize: "Tamanho da Imagem",
     imgOffsetX: "Deslocamento Horizontal",

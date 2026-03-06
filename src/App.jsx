@@ -31,9 +31,12 @@ function App() {
 
   const [coverPosition, setCoverPosition] = useState('left');
   const [customHexColor, setCustomHexColor] = useState('#c084fc');
+  const [secondaryHexColor, setSecondaryHexColor] = useState('#60a5fa');
+  const [titleColor, setTitleColor] = useState('#ffffff');
   const [titleFont, setTitleFont] = useState('Montserrat');
   const [imageShape, setImageShape] = useState('square');
   const [amplitude, setAmplitude] = useState(1.0);
+  const [barHeight, setBarHeight] = useState(1.0); // New V13: Limit bar max height percentage
   const [showTitle, setShowTitle] = useState(true);
   const [textStyle, setTextStyle] = useState('solid');
   
@@ -106,275 +109,210 @@ function App() {
         </div>
 
         {audioFiles.length > 0 && (
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column',
-              gap: '1.5rem', 
-              marginBottom: '2rem', 
-              background: 'rgba(0,0,0,0.2)',
-              padding: '1.5rem',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.05)'
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'minmax(400px, 450px) 1fr', 
+            gap: '2rem',
+            alignItems: 'start'
+          }}>
+            {/* LEFT COLUMN: SETTINGS */}
+            <div className="glass-panel" style={{ 
+              padding: '1.5rem', 
+              position: 'sticky', 
+              top: '1rem',
+              maxHeight: 'calc(100vh - 2rem)',
+              overflowY: 'auto'
             }}>
-              
-              <div>
-                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                  {texts.step1}
-                </h4>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button className={`glass-button ${selectedStyle === 'bars' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars')}>{texts.styleBarsUp}</button>
-                  <button className={`glass-button ${selectedStyle === 'bars-down' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-down')}>{texts.styleBarsDown}</button>
-                  <button className={`glass-button ${selectedStyle === 'bars-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-sym')}>{texts.styleBarsSym}</button>
-                  <button className={`glass-button ${selectedStyle === 'bars-blocks' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-blocks')}>{texts.styleBarsBlocks}</button>
-                  <button className={`glass-button ${selectedStyle === 'particles' ? 'primary' : ''}`} onClick={() => setSelectedStyle('particles')}>{texts.styleParticles}</button>
-                  
-                  <button className={`glass-button ${selectedStyle === 'wave' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave')}>{texts.styleWave}</button>
-                  <button className={`glass-button ${selectedStyle === 'wave-line' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-line')}>{texts.styleLineWave}</button>
-                  <button className={`glass-button ${selectedStyle === 'wave-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-sym')}>{texts.styleWaveSym}</button>
-                  
-                  <button className={`glass-button ${selectedStyle === 'circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('circle')}>{texts.styleCircle}</button>
-                  <button className={`glass-button ${selectedStyle === 'wave-circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-circle')}>{texts.styleWaveCircle}</button>
-                  <button className={`glass-button ${selectedStyle === 'pulse' ? 'primary' : ''}`} onClick={() => setSelectedStyle('pulse')}>{texts.stylePulse}</button>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                gap: '1.2rem'
+              }}>
+                
+                {/* 1. Visualizer Style */}
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step1}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                    <button className={`glass-button ${selectedStyle === 'bars' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars')}>{texts.styleBarsUp}</button>
+                    <button className={`glass-button ${selectedStyle === 'bars-down' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-down')}>{texts.styleBarsDown}</button>
+                    <button className={`glass-button ${selectedStyle === 'bars-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-sym')}>{texts.styleBarsSym}</button>
+                    <button className={`glass-button ${selectedStyle === 'bars-blocks' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-blocks')}>{texts.styleBarsBlocks}</button>
+                    <button className={`glass-button ${selectedStyle === 'particles' ? 'primary' : ''}`} onClick={() => setSelectedStyle('particles')}>{texts.styleParticles}</button>
+                    <button className={`glass-button ${selectedStyle === 'wave' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave')}>{texts.styleWave}</button>
+                    <button className={`glass-button ${selectedStyle === 'wave-line' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-line')}>{texts.styleLineWave}</button>
+                    <button className={`glass-button ${selectedStyle === 'wave-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-sym')}>{texts.styleWaveSym}</button>
+                    <button className={`glass-button ${selectedStyle === 'circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('circle')}>{texts.styleCircle}</button>
+                    <button className={`glass-button ${selectedStyle === 'wave-circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-circle')}>{texts.styleWaveCircle}</button>
+                    <button className={`glass-button ${selectedStyle === 'pulse' ? 'primary' : ''}`} onClick={() => setSelectedStyle('pulse')}>{texts.stylePulse}</button>
+                  </div>
+                  <div style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{texts.amplitude}</span>
+                      <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{Math.round(amplitude * 100)}%</span>
+                    </div>
+                    <input type="range" min="0.1" max="2.5" step="0.1" value={amplitude} onChange={(e) => setAmplitude(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', marginTop: '0.8rem' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{texts.barHeight}</span>
+                      <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{Math.round(barHeight * 100)}%</span>
+                    </div>
+                    <input type="range" min="0.1" max="1.5" step="0.05" value={barHeight} onChange={(e) => setBarHeight(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                  </div>
+                </div>
+
+                {/* 2. Special FX */}
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step2}</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                    {Object.keys(activeFX).map(fx => (
+                      <label key={fx} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.4rem', borderRadius: '4px', fontSize: '0.85rem' }}>
+                        <input type="checkbox" checked={activeFX[fx]} onChange={() => toggleFX(fx)} /> {texts[`fx${fx.charAt(0).toUpperCase() + fx.slice(1)}`]}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Layout */}
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step3}</h4>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className={`glass-button ${layoutType === 'clean' ? 'primary' : ''}`} onClick={() => setLayoutType('clean')} style={{ flex: 1 }}>{texts.layoutClean}</button>
+                    <button className={`glass-button ${layoutType === 'mini-cover' ? 'primary' : ''}`} onClick={() => setLayoutType('mini-cover')} style={{ flex: 1 }}>{texts.layoutMiniCover}</button>
+                    <button className={`glass-button ${layoutType === 'title' ? 'primary' : ''}`} onClick={() => setLayoutType('title')} style={{ flex: 1 }}>{texts.layoutTitle}</button>
+                  </div>
                 </div>
                 
-                <div style={{ marginTop: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontWeight: '500' }}>{texts.amplitude}</span>
-                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{Math.round(amplitude * 100)}%</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0.1" 
-                    max="2.5" 
-                    step="0.1" 
-                    value={amplitude} 
-                    onChange={(e) => setAmplitude(parseFloat(e.target.value))}
-                    style={{ width: '100%', accentColor: 'var(--primary)' }}
-                  />
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{texts.amplitudeDesc}</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step2}</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.glow} onChange={() => toggleFX('glow')} /> {texts.fxGlow}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.aberration} onChange={() => toggleFX('aberration')} /> {texts.fxAberration}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.vhs} onChange={() => toggleFX('vhs')} /> {texts.fxVhs}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.mirror} onChange={() => toggleFX('mirror')} /> {texts.fxMirror}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.embers} onChange={() => toggleFX('embers')} /> {texts.fxEmbers}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.pixelate} onChange={() => toggleFX('pixelate')} /> {texts.fxPixelate}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.shake} onChange={() => toggleFX('shake')} /> {texts.fxShake}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.flash} onChange={() => toggleFX('flash')} /> {texts.fxFlash}
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.rainbow} onChange={() => toggleFX('rainbow')} /> {texts.fxRainbow}
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step3}</h4>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button className={`glass-button ${layoutType === 'clean' ? 'primary' : ''}`} onClick={() => setLayoutType('clean')}>{texts.layoutClean}</button>
-                  <button className={`glass-button ${layoutType === 'mini-cover' ? 'primary' : ''}`} onClick={() => setLayoutType('mini-cover')}>{texts.layoutMiniCover}</button>
-                  <button className={`glass-button ${layoutType === 'title' ? 'primary' : ''}`} onClick={() => setLayoutType('title')}>{texts.layoutTitle}</button>
-                </div>
-              </div>
-              
-              {/* Optional Configs depending on Layout */}
-              {(layoutType === 'mini-cover' || (layoutType === 'clean' && ['circle', 'wave-circle', 'pulse'].includes(selectedStyle))) && (
-                <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div>
-                    <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.addCover}</h5>
-                    <ImageUploader onImageAdded={(img) => setAlbumCover(img)} />
-                    {albumCover && <span style={{ color: 'var(--success)', marginLeft: '1rem', fontSize: '0.9rem' }}>✓ {texts.coverSelected}</span>}
-                  </div>
-                  
-                  {layoutType === 'mini-cover' && (
-                    <div>
-                      <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.alignment}</h5>
-                      <div style={{ display: 'flex', gap: '1rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input type="radio" name="coverPos" checked={coverPosition === 'left'} onChange={() => setCoverPosition('left')} /> {texts.left}
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input type="radio" name="coverPos" checked={coverPosition === 'right'} onChange={() => setCoverPosition('right')} /> {texts.right}
-                        </label>
+                {/* 4. Color System V13 */}
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step4}</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(0,0,0,0.3)', padding: '0.6rem', borderRadius: '8px' }}>
+                      <input type="color" value={customHexColor} onChange={(e) => setCustomHexColor(e.target.value)} style={{ width: '35px', height: '35px', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'none' }} />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{texts.primaryHue}</span>
                       </div>
                     </div>
-                  )}
-
-                  <div>
-                    <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.imageShape}</h5>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input type="radio" name="imgShape" checked={imageShape === 'square'} onChange={() => setImageShape('square')} /> {texts.square}
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input type="radio" name="imgShape" checked={imageShape === 'rounded'} onChange={() => setImageShape('rounded')} /> {texts.rounded}
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input type="radio" name="imgShape" checked={imageShape === 'circle'} onChange={() => setImageShape('circle')} /> {texts.circle}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem', marginTop: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step4}</h4>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', flex: 1 }}>
-                    <input 
-                      type="color" 
-                      value={customHexColor} 
-                      onChange={(e) => setCustomHexColor(e.target.value)} 
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        padding: '0',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        background: 'none'
-                      }}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                      <span style={{ fontWeight: '500', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{texts.primaryHue}</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{texts.hueDesc}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(0,0,0,0.3)', padding: '0.6rem', borderRadius: '8px' }}>
+                      <input type="color" value={secondaryHexColor} onChange={(e) => setSecondaryHexColor(e.target.value)} style={{ width: '35px', height: '35px', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'none' }} />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{texts.secondaryColor}</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{texts.secondaryColorDesc}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {/* 5. Title Settings */}
+                <div>
                   <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step5}</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', flex: 1, justifyContent: 'center' }}>
-                    
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: '0.5rem' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={showTitle} 
-                        onChange={(e) => setShowTitle(e.target.checked)} 
-                      />
-                      {texts.showTitle}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <input type="checkbox" checked={showTitle} onChange={(e) => setShowTitle(e.target.checked)} /> {texts.showTitle}
                     </label>
 
                     {showTitle && (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <select 
-                          value={titleFont} 
-                          onChange={(e) => setTitleFont(e.target.value)}
-                          className="glass-button"
-                          style={{ textAlign: 'left', padding: '0.5rem', fontFamily: titleFont, flex: 1 }}
-                        >
-                          <option value="Montserrat" style={{ fontFamily: 'Montserrat' }}>Montserrat</option>
-                          <option value="Outfit" style={{ fontFamily: 'Outfit' }}>Outfit</option>
-                          <option value="Inter" style={{ fontFamily: 'Inter' }}>Inter</option>
-                          <option value="Space Grotesk" style={{ fontFamily: 'Space Grotesk' }}>Space Grotesk</option>
-                          <option value="Oswald" style={{ fontFamily: 'Oswald' }}>Oswald</option>
-                          <option value="Playfair Display" style={{ fontFamily: 'Playfair Display' }}>Playfair Display</option>
-                          <option value="Bebas Neue" style={{ fontFamily: 'Bebas Neue' }}>Bebas Neue</option>
-                          <option value="Righteous" style={{ fontFamily: 'Righteous' }}>Righteous</option>
-                          <option value="Cinzel" style={{ fontFamily: 'Cinzel' }}>Cinzel</option>
-                          <option value="Orbitron" style={{ fontFamily: 'Orbitron' }}>Orbitron</option>
-                          <option value="Press Start 2P" style={{ fontFamily: 'Press Start 2P' }}>Press Start 2P</option>
-                          <option value="Audiowide" style={{ fontFamily: 'Audiowide' }}>Audiowide</option>
-                          <option value="Teko" style={{ fontFamily: 'Teko' }}>Teko</option>
-                          <option value="Syne" style={{ fontFamily: 'Syne' }}>Syne</option>
-                          <option value="Permanent Marker" style={{ fontFamily: 'Permanent Marker' }}>Permanent Marker</option>
-                          <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
-                          <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                          <input type="color" value={titleColor} onChange={(e) => setTitleColor(e.target.value)} style={{ width: '30px', height: '30px', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'none' }} />
+                          <span style={{ fontSize: '0.85rem' }}>{texts.titleColor}</span>
+                        </div>
+                        <select value={titleFont} onChange={(e) => setTitleFont(e.target.value)} className="glass-button" style={{ textAlign: 'left', padding: '0.4rem', fontSize: '0.85rem', fontFamily: titleFont }}>
+                          <option value="Montserrat">Montserrat</option>
+                          <option value="Outfit">Outfit</option>
+                          <option value="Inter">Inter</option>
+                          <option value="Space Grotesk">Space Grotesk</option>
+                          <option value="Bebas Neue">Bebas Neue</option>
+                          <option value="Righteous">Righteous</option>
+                          <option value="Orbitron">Orbitron</option>
+                          <option value="Press Start 2P">8-Bit Retro</option>
+                          <option value="Syne">Syne</option>
+                          <option value="Permanent Marker">Handwritten</option>
                         </select>
-
-                        <select
-                          value={textStyle}
-                          onChange={(e) => setTextStyle(e.target.value)}
-                          className="glass-button"
-                          style={{ padding: '0.5rem', flex: 1 }}
-                        >
+                        <select value={textStyle} onChange={(e) => setTextStyle(e.target.value)} className="glass-button" style={{ padding: '0.4rem', fontSize: '0.85rem' }}>
                           <option value="solid">{texts.textSolid}</option>
                           <option value="neon">{texts.textNeon}</option>
                           <option value="outline">{texts.textOutline}</option>
+                          <option value="shadow3d">{texts.textShadow3d}</option>
+                          <option value="glitch">{texts.textGlitch}</option>
+                          <option value="gradient">{texts.textGradient}</option>
                         </select>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
-              </div>
 
-              {/* Step 6: Image Editing */}
-              {albumCover && (
+                {/* 6. Image & Transform */}
                 <div>
-                  <h3 style={{ marginBottom: '1rem' }}>{texts.step6}</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px' }}>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgSize}: {Math.round(imgSize * 100)}%</label>
-                      <input type="range" min="0.2" max="3" step="0.05" value={imgSize} onChange={e => setImgSize(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.addCover}</h4>
+                  <ImageUploader onImageAdded={(img) => setAlbumCover(img)} />
+                  
+                  {albumCover && (
+                    <div style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '0.8rem', borderRadius: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Posição:
+                          <select value={coverPosition} onChange={e => setCoverPosition(e.target.value)} className="glass-button" style={{ padding: '0.2rem', marginLeft: '0.5rem' }}>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                            <option value="center">Center</option>
+                          </select>
+                        </label>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Forma:
+                          <select value={imageShape} onChange={e => setImageShape(e.target.value)} className="glass-button" style={{ padding: '0.2rem', marginLeft: '0.5rem' }}>
+                            <option value="square">Square</option>
+                            <option value="rounded">Rounded</option>
+                            <option value="circle">Circle</option>
+                          </select>
+                        </label>
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        <div>
+                          <label style={{ fontSize: '0.7rem' }}>{texts.imgSize}: {Math.round(imgSize * 100)}%</label>
+                          <input type="range" min="0.2" max="3" step="0.05" value={imgSize} onChange={e => setImgSize(Number.parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem' }}>{texts.imgRotation}: {imgRotation}°</label>
+                          <input type="range" min="-180" max="180" step="1" value={imgRotation} onChange={e => setImgRotation(Number.parseInt(e.target.value, 10))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem' }}>{texts.imgOffsetX}: {imgOffsetX}px</label>
+                          <input type="range" min="-500" max="500" step="5" value={imgOffsetX} onChange={e => setImgOffsetX(Number.parseInt(e.target.value, 10))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem' }}>{texts.imgOffsetY}: {imgOffsetY}px</label>
+                          <input type="range" min="-500" max="500" step="5" value={imgOffsetY} onChange={e => setImgOffsetY(Number.parseInt(e.target.value, 10))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem' }}>Blur: {imgBlur}px</label>
+                          <input type="range" min="0" max="30" step="1" value={imgBlur} onChange={e => setImgBlur(Number.parseInt(e.target.value, 10))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem' }}>Borda: {imgBorderWidth}px</label>
+                          <input type="range" min="0" max="20" step="1" value={imgBorderWidth} onChange={e => setImgBorderWidth(Number.parseInt(e.target.value, 10))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <label style={{ fontSize: '0.7rem' }}>Cor:</label>
+                          <input type="color" value={imgBorderColor} onChange={e => setImgBorderColor(e.target.value)} style={{ width: '30px', height: '24px', border: 'none', background: 'none', cursor: 'pointer' }} />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgRotation}: {imgRotation}°</label>
-                      <input type="range" min="-180" max="180" step="1" value={imgRotation} onChange={e => setImgRotation(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgOffsetX}: {imgOffsetX}px</label>
-                      <input type="range" min="-500" max="500" step="5" value={imgOffsetX} onChange={e => setImgOffsetX(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgOffsetY}: {imgOffsetY}px</label>
-                      <input type="range" min="-500" max="500" step="5" value={imgOffsetY} onChange={e => setImgOffsetY(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgBlur}: {imgBlur}px</label>
-                      <input type="range" min="0" max="30" step="1" value={imgBlur} onChange={e => setImgBlur(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgBorderWidth}: {imgBorderWidth}px</label>
-                      <input type="range" min="0" max="20" step="1" value={imgBorderWidth} onChange={e => setImgBorderWidth(parseInt(e.target.value))} style={{ width: '100%', accentColor: 'var(--primary)' }} />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{texts.imgBorderColor}</label>
-                      <input type="color" value={imgBorderColor} onChange={e => setImgBorderColor(e.target.value)} style={{ width: '40px', height: '30px', border: 'none', background: 'none', cursor: 'pointer' }} />
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
-              
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
-                <button 
-                  className="glass-button" 
-                  onClick={() => startBatchExport('webm')}
-                  disabled={isBatchExporting}
-                >
-                  {isBatchExporting ? '...' : `⬇️ BATCH: ${texts.instant}`}
-                </button>
-                <button 
-                  className="glass-button primary" 
-                  onClick={() => startBatchExport('mp4')}
-                  disabled={isBatchExporting}
-                >
-                  {isBatchExporting ? 'BATCH EXPORTING (PLEASE WAIT)...' : `⬇️ BATCH: ${texts.mp4}`}
-                </button>
-              </div>
 
+                {/* Batch Export */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                  <button className="glass-button primary" onClick={() => startBatchExport('mp4')} disabled={isBatchExporting} style={{ padding: '0.8rem' }}>
+                    {isBatchExporting ? 'EXPORTANDO...' : `🎬 EXPORTAR TUDO (MP4)`}
+                  </button>
+                  <button className="glass-button" onClick={() => startBatchExport('webm')} disabled={isBatchExporting} style={{ fontSize: '0.8rem' }}>
+                    {isBatchExporting ? '...' : `⬇️ Exportar em WebM (Rápido)`}
+                  </button>
+                </div>
+
+              </div>
             </div>
 
+            {/* RIGHT COLUMN: PREVIEWS */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {audioFiles.map((file, index) => (
                 <VisualizerPreview 
@@ -387,9 +325,12 @@ function App() {
                   activeFX={activeFX}
                   coverPosition={coverPosition}
                   customHexColor={customHexColor}
+                  secondaryHexColor={secondaryHexColor}
+                  titleColor={titleColor}
                   titleFont={titleFont}
                   imageShape={imageShape}
                   amplitude={amplitude}
+                  barHeight={barHeight}
                   showTitle={showTitle}
                   textStyle={textStyle}
                   imgTransform={{ imgSize, imgOffsetX, imgOffsetY, imgRotation, imgBorderWidth, imgBorderColor, imgBlur }}
