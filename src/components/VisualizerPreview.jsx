@@ -106,7 +106,7 @@ const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover,
     // Safety check - avoid dual loops
     if (!singleFrame && !isPlayingRef.current) return;
 
-    drawVisualizer(canvasRef.current, analyserRef.current, dataArrayRef.current, configRef.current);
+    drawVisualizer(canvasRef.current, analyserRef.current, dataArrayRef.current, configRef.current, !isPlayingRef.current);
     if (!singleFrame) {
       animationRef.current = requestAnimationFrame(() => draw(false));
     }

@@ -40,7 +40,11 @@ export const createRecorder = (canvas, audioContext, sourceNode) => {
     }
   }
 
-  const recorder = new MediaRecorder(combinedStream, { mimeType: finalMimeType });
+  const recorder = new MediaRecorder(combinedStream, { 
+    mimeType: finalMimeType,
+    videoBitsPerSecond: 6000000, // 6Mbps - Sharp but not unconstrained
+    audioBitsPerSecond: 192000    // 192Kbps
+  });
 
   recorder.ondataavailable = (e) => {
     if (e.data.size > 0) chunks.push(e.data);
@@ -63,14 +67,21 @@ export const convertWebmToMp4 = async (webmBlob, fileName = 'visualizer', onProg
 
   await fm.writeFile(inputName, await fetchFile(webmBlob));
 
-  // V13: Include audio in the MP4 output + Fix Compatibility for CapCut
-  // Using -pix_fmt yuv420p and -r 30 for max compatibility
+  // V14: Ultimate Compatibility for CapCut & NLEs
+  // -g 30 + -sc_threshold 0: Force keyframe every 1s (essential for scrubbing)
+  // -tune fastdecode: Optimizes for smooth playback on mobile/weaker hardware
+  // -crf 20: Stable quality / size balance
   await fm.exec([
     '-i', inputName,
     '-c:v', 'libx264',
     '-preset', 'ultrafast',
+    '-tune', 'fastdecode',
     '-pix_fmt', 'yuv420p',
     '-r', '30',
+    '-g', '30',
+    '-keyint_min', '30',
+    '-sc_threshold', '0',
+    '-crf', '20',
     '-c:a', 'aac',
     '-b:a', '192k',
     '-movflags', '+faststart',

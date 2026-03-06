@@ -191,7 +191,7 @@ const applyPixelate = (ctx, width, height) => {
 
 // --- Main Engine ---
 
-export const drawVisualizer = (canvas, analyser, dataArray, config) => {
+export const drawVisualizer = (canvas, analyser, dataArray, config, isPaused = false) => {
   const { style, layout, albumImg, songTitle, activeFX = {}, coverPosition, customHexColor } = config;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const width = canvas.width;
@@ -202,7 +202,11 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, width, height);
 
-  analyser.getByteFrequencyData(dataArray);
+  // V13: Only update the frequency data if the audio is playing.
+  // This prevents the bars from decaying to zero when the user is paused and changing settings.
+  if (analyser && !isPaused) {
+    analyser.getByteFrequencyData(dataArray);
+  }
   
   const numVisualBands = 120;
   const activeDataArray = getLogarithmicFrequencies(dataArray, numVisualBands);
@@ -216,7 +220,7 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   const subBassPow = Math.pow(subBassAvg, 1.5);
 
   // V12 Custom Amplitude Scaling 
-  const ampScalar = config.amplitude !== undefined ? config.amplitude : 1.0;
+  const ampScalar = config.amplitude !== undefined ? config.amplitude : 1;
   for (let i = 0; i < activeDataArray.length; i++) {
     activeDataArray[i] = activeDataArray[i] * ampScalar;
   }
@@ -246,7 +250,7 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   }
 
   // Render Inner Graphics Wrapper
-  const renderCore = (scaleY = 1, fadeAlpha = 1.0) => {
+  const renderCore = (scaleY = 1, fadeAlpha = 1) => {
     ctx.save();
     ctx.translate(offsetX, offsetY); // Shake logic
 
@@ -316,7 +320,7 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   };
 
   // Render Pass 1: Original
-  renderCore(1, 1.0);
+  renderCore(1, 1);
 
   // FX: Mirror Floor
   if (activeFX.mirror) {
@@ -349,13 +353,13 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   // Isolate drawing state from any global alterations done by Glitch passes
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 1.0;
+  ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
   ctx.imageSmoothingEnabled = true; // Recover from Pixelate
 
   // 1. Draw Images Immune to FX
   const imgT = config.imgTransform || {};
-  const imgScale = imgT.imgSize || 1.0;
+  const imgScale = imgT.imgSize || 1;
   const imgOX = (imgT.imgOffsetX || 0) * (height / 1080);
   const imgOY = (imgT.imgOffsetY || 0) * (height / 1080);
   const imgRot = (imgT.imgRotation || 0) * (Math.PI / 180);
