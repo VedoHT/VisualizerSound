@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { setupAudioContext, drawVisualizer } from '../utils/audioVisualizer';
 import { createRecorder, convertWebmToMp4, downloadBlob } from '../services/exportService';
 
-export default function VisualizerPreview({ file, styleType, layoutType, albumCover, activeFX, coverPosition, customHexColor, titleFont, imageShape, onRemove }) {
+const VisualizerPreview = forwardRef(({ file, styleType, layoutType, albumCover, activeFX, coverPosition, customHexColor, titleFont, imageShape, onRemove, texts }, ref) => {
   const canvasWrapRef = useRef(null);
   const canvasRef = useRef(null);
   const audioRef = useRef(null);
@@ -128,26 +129,30 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
   };
 
   const handleExport = async (format = 'mp4') => {
-    if (isExporting || !audioRef.current || !canvasRef.current) return;
-    
-    setIsExporting(true);
-    setExportProgress('Initializing audio...');
-    initAudio();
-    
-    // V7: Silent Export
-    audioRef.current.muted = true;
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-      isPlayingRef.current = false;
-      cancelAnimationFrame(animationRef.current);
-      setIsPlaying(false);
-    }
-    
-    audioRef.current.currentTime = 0;
-    
-    try {
-      setExportProgress('Recording visualizer...');
+    return new Promise((resolve, reject) => {
+      if (isExporting || !audioRef.current || !canvasRef.current) {
+        resolve();
+        return;
+      }
+      
+      setIsExporting(true);
+      setExportProgress(texts?.initializing || 'Initializing audio...');
+      initAudio();
+      
+      // V7: Silent Export
+      audioRef.current.muted = true;
+      
+      if (isPlaying) {
+        audioRef.current.pause();
+        isPlayingRef.current = false;
+        cancelAnimationFrame(animationRef.current);
+        setIsPlaying(false);
+      }
+      
+      audioRef.current.currentTime = 0;
+      
+      try {
+        setExportProgress(texts?.recording || 'Recording visualizer...');
       const { recorder, chunks } = createRecorder(canvasRef.current, audioCtxRef.current, sourceNodeRef.current);
       recorderRef.current = recorder;
       chunksRef.current = chunks;
@@ -155,18 +160,19 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
       recorder.onstop = async () => {
         const webmBlob = new Blob(chunksRef.current, { type: 'video/webm' });
         
-        if (format === 'webm') {
-          downloadBlob(webmBlob, `${songTitle}_${styleType}.webm`);
-          setExportProgress('');
-          setIsExporting(false);
-          chunksRef.current = [];
-          if (audioRef.current) {
-            audioRef.current.muted = false;
-            audioRef.current.currentTime = 0;
-            setCurrentTime(0);
+          if (format === 'webm') {
+            downloadBlob(webmBlob, `${songTitle}_${styleType}.webm`);
+            setExportProgress('');
+            setIsExporting(false);
+            chunksRef.current = [];
+            if (audioRef.current) {
+              audioRef.current.muted = false;
+              audioRef.current.currentTime = 0;
+              setCurrentTime(0);
+            }
+            resolve();
+            return;
           }
-          return;
-        }
 
         setExportProgress('Encoding MP4 (0%)...');
         
@@ -178,21 +184,23 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
           );
           downloadBlob(mp4Blob, `${songTitle}_${styleType}.mp4`);
           setExportProgress('');
-        } catch (err) {
-          console.error('Error during conversion', err);
-          setExportProgress('Export failed! See console.');
-        } finally {
-          setIsExporting(false);
-          chunksRef.current = [];
-          
-          // Re-enable sound
-          if (audioRef.current) {
-            audioRef.current.muted = false;
-            audioRef.current.currentTime = 0;
-            setCurrentTime(0);
+          } catch (err) {
+            console.error('Error during conversion', err);
+            setExportProgress('Export failed! See console.');
+            reject(err);
+          } finally {
+            setIsExporting(false);
+            chunksRef.current = [];
+            
+            // Re-enable sound
+            if (audioRef.current) {
+              audioRef.current.muted = false;
+              audioRef.current.currentTime = 0;
+              setCurrentTime(0);
+            }
+            resolve();
           }
-        }
-      };
+        };
 
       recorder.start();
       
@@ -201,16 +209,23 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
         audioCtxRef.current.resume();
       }
       
-      isPlayingRef.current = true;
-      draw();
-      
-    } catch (err) {
-      console.error(err);
-      setExportProgress('Error starting recorder.');
-      setIsExporting(false);
-      audioRef.current.muted = false;
-    }
+        isPlayingRef.current = true;
+        draw();
+        
+      } catch (err) {
+        console.error(err);
+        setExportProgress('Error starting recorder.');
+        setIsExporting(false);
+        audioRef.current.muted = false;
+        reject(err);
+      }
+    });
   };
+
+  useImperativeHandle(ref, () => ({
+    exportWebM: () => handleExport('webm'),
+    exportMP4: () => handleExport('mp4')
+  }));
 
   const formatTime = (timeInSeconds) => {
     const m = Math.floor(timeInSeconds / 60);
@@ -317,10 +332,11 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
             padding: '1rem 2rem',
             borderRadius: '8px'
           }}>
-            Press Play to preview visualizer
+            {texts?.pressPlay || 'Press Play to preview visualizer'}
           </div>
         )}
 
+        {/* Loading Overlay */}
         {isExporting && (
           <div style={{
             position: 'absolute',
@@ -337,7 +353,7 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
             zIndex: 10
           }}>
             <h2 style={{ color: 'var(--primary)', marginBottom: '1rem', textShadow: '0 0 20px var(--primary)' }}>
-              SILENT EXPORT IN PROGRESS...
+              {texts?.exporting || 'SILENT EXPORT IN PROGRESS...'}
             </h2>
             <div style={{ 
               width: '60%', 
@@ -357,7 +373,7 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
             <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>
               {exportProgress.includes('Encoding') 
                 ? exportProgress 
-                : `Rendering Frame ${formatTime(currentTime)} / ${formatTime(duration)}`}
+                : `${texts?.frame || 'Rendering Frame'} ${formatTime(currentTime)} / ${formatTime(duration)}`}
             </p>
           </div>
         )}
@@ -410,7 +426,7 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
             style={{ padding: '8px 16px', background: 'rgba(255, 255, 255, 0.05)' }}
             title="Saves instantly, no FFmpeg CPU encoding needed. CapCut supports WebM."
           >
-            {isExporting ? '...' : 'Download WebM (Instant)'}
+            {isExporting ? '...' : (texts?.instant || 'Download WebM (Instant)')}
           </button>
           <button 
             className="glass-button primary" 
@@ -418,10 +434,12 @@ export default function VisualizerPreview({ file, styleType, layoutType, albumCo
             disabled={isExporting}
             title="Encodes native H264 MP4 using WASM. Takes extra time."
           >
-            {isExporting ? 'Exporting...' : 'Export 1080p MP4 (Slower)'}
+            {isExporting ? '...' : (texts?.mp4 || 'Export 1080p MP4 (Slower)')}
           </button>
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default VisualizerPreview;

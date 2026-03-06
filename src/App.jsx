@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Uploader from './components/Uploader';
 import VisualizerPreview from './components/VisualizerPreview';
 import ImageUploader from './components/ImageUploader';
+import { t } from './translations';
 import './index.css';
 
 function App() {
@@ -32,16 +33,58 @@ function App() {
   const [customHexColor, setCustomHexColor] = useState('#c084fc');
   const [titleFont, setTitleFont] = useState('Montserrat');
   const [imageShape, setImageShape] = useState('square');
+  const [lang, setLang] = useState('pt'); // Default to PT as requested
+
+  const texts = t[lang];
+
+  // Batch Export System V11
+  const previewRefs = useRef([]);
+  const [isBatchExporting, setIsBatchExporting] = useState(false);
 
   const removeTrack = (indexToRemove) => {
     setAudioFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    previewRefs.current = previewRefs.current.filter((_, idx) => idx !== indexToRemove);
+  };
+
+  const startBatchExport = async (format) => {
+    if (audioFiles.length === 0 || isBatchExporting) return;
+    setIsBatchExporting(true);
+
+    for (let i = 0; i < previewRefs.current.length; i++) {
+        const ref = previewRefs.current[i];
+        if (ref) {
+            try {
+                if (format === 'webm') {
+                   await ref.exportWebM();
+                } else {
+                   await ref.exportMP4();
+                }
+            } catch (err) {
+                console.error(`Export failed for track ${i}`, err);
+            }
+        }
+    }
+    
+    setIsBatchExporting(false);
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ position: 'relative' }}>
+      
+      {/* Absolute Language Toggle */}
+      <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+        <button 
+          className="glass-button" 
+          onClick={() => setLang(lang === 'en' ? 'pt' : 'en')}
+          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+        >
+          {lang === 'en' ? '🇧🇷 PT-BR' : '🇺🇸 EN-US'}
+        </button>
+      </div>
+
       <header className="header">
-        <h1>Music Visualizer</h1>
-        <p>Upload your tracks, select a stunning spectrum, and export to MP4.</p>
+        <h1>{texts.title}</h1>
+        <p>{texts.subtitle}</p>
       </header>
 
       <main>
@@ -64,64 +107,64 @@ function App() {
               
               <div>
                 <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                  1. Global Configuration (Applies to all tracks)
+                  {texts.step1}
                 </h4>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button className={`glass-button ${selectedStyle === 'bars' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars')}>Bars (Up)</button>
-                  <button className={`glass-button ${selectedStyle === 'bars-down' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-down')}>Bars (Down)</button>
-                  <button className={`glass-button ${selectedStyle === 'bars-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-sym')}>Bars (Sym)</button>
-                  <button className={`glass-button ${selectedStyle === 'bars-blocks' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-blocks')}>Segmented Bars</button>
-                  <button className={`glass-button ${selectedStyle === 'particles' ? 'primary' : ''}`} onClick={() => setSelectedStyle('particles')}>Particles</button>
+                  <button className={`glass-button ${selectedStyle === 'bars' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars')}>{texts.styleBarsUp}</button>
+                  <button className={`glass-button ${selectedStyle === 'bars-down' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-down')}>{texts.styleBarsDown}</button>
+                  <button className={`glass-button ${selectedStyle === 'bars-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-sym')}>{texts.styleBarsSym}</button>
+                  <button className={`glass-button ${selectedStyle === 'bars-blocks' ? 'primary' : ''}`} onClick={() => setSelectedStyle('bars-blocks')}>{texts.styleBarsBlocks}</button>
+                  <button className={`glass-button ${selectedStyle === 'particles' ? 'primary' : ''}`} onClick={() => setSelectedStyle('particles')}>{texts.styleParticles}</button>
                   
-                  <button className={`glass-button ${selectedStyle === 'wave' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave')}>Wave (Fill)</button>
-                  <button className={`glass-button ${selectedStyle === 'wave-line' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-line')}>Wave (Line)</button>
-                  <button className={`glass-button ${selectedStyle === 'wave-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-sym')}>Wave (Sym)</button>
+                  <button className={`glass-button ${selectedStyle === 'wave' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave')}>{texts.styleWave}</button>
+                  <button className={`glass-button ${selectedStyle === 'wave-line' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-line')}>{texts.styleLineWave}</button>
+                  <button className={`glass-button ${selectedStyle === 'wave-sym' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-sym')}>{texts.styleWaveSym}</button>
                   
-                  <button className={`glass-button ${selectedStyle === 'circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('circle')}>Circle</button>
-                  <button className={`glass-button ${selectedStyle === 'wave-circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-circle')}>Wave Circle</button>
-                  <button className={`glass-button ${selectedStyle === 'pulse' ? 'primary' : ''}`} onClick={() => setSelectedStyle('pulse')}>Pulse (Bass)</button>
+                  <button className={`glass-button ${selectedStyle === 'circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('circle')}>{texts.styleCircle}</button>
+                  <button className={`glass-button ${selectedStyle === 'wave-circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-circle')}>{texts.styleWaveCircle}</button>
+                  <button className={`glass-button ${selectedStyle === 'pulse' ? 'primary' : ''}`} onClick={() => setSelectedStyle('pulse')}>{texts.stylePulse}</button>
                 </div>
               </div>
 
               <div>
-                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>2. Special FX (Stackable)</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step2}</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.glow} onChange={() => toggleFX('glow')} /> Neon Glow
+                    <input type="checkbox" checked={activeFX.glow} onChange={() => toggleFX('glow')} /> {texts.fxGlow}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.aberration} onChange={() => toggleFX('aberration')} /> RGB Split
+                    <input type="checkbox" checked={activeFX.aberration} onChange={() => toggleFX('aberration')} /> {texts.fxAberration}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.vhs} onChange={() => toggleFX('vhs')} /> VHS Glitch
+                    <input type="checkbox" checked={activeFX.vhs} onChange={() => toggleFX('vhs')} /> {texts.fxVhs}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.mirror} onChange={() => toggleFX('mirror')} /> Mirror Floor
+                    <input type="checkbox" checked={activeFX.mirror} onChange={() => toggleFX('mirror')} /> {texts.fxMirror}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.embers} onChange={() => toggleFX('embers')} /> Embers
+                    <input type="checkbox" checked={activeFX.embers} onChange={() => toggleFX('embers')} /> {texts.fxEmbers}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.pixelate} onChange={() => toggleFX('pixelate')} /> Pixelate 8-Bit
+                    <input type="checkbox" checked={activeFX.pixelate} onChange={() => toggleFX('pixelate')} /> {texts.fxPixelate}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.shake} onChange={() => toggleFX('shake')} /> Bass Shake
+                    <input type="checkbox" checked={activeFX.shake} onChange={() => toggleFX('shake')} /> {texts.fxShake}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.flash} onChange={() => toggleFX('flash')} /> Flash Bang
+                    <input type="checkbox" checked={activeFX.flash} onChange={() => toggleFX('flash')} /> {texts.fxFlash}
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '4px' }}>
-                    <input type="checkbox" checked={activeFX.rainbow} onChange={() => toggleFX('rainbow')} /> Rainbow Hue
+                    <input type="checkbox" checked={activeFX.rainbow} onChange={() => toggleFX('rainbow')} /> {texts.fxRainbow}
                   </label>
                 </div>
               </div>
 
               <div>
-                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>3. Composition Layout (CapCut Ready)</h4>
+                <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step3}</h4>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button className={`glass-button ${layoutType === 'clean' ? 'primary' : ''}`} onClick={() => setLayoutType('clean')}>Clean (Centered)</button>
-                  <button className={`glass-button ${layoutType === 'mini-cover' ? 'primary' : ''}`} onClick={() => setLayoutType('mini-cover')}>Mini Cover Mode</button>
-                  <button className={`glass-button ${layoutType === 'title' ? 'primary' : ''}`} onClick={() => setLayoutType('title')}>Title Mode</button>
+                  <button className={`glass-button ${layoutType === 'clean' ? 'primary' : ''}`} onClick={() => setLayoutType('clean')}>{texts.layoutClean}</button>
+                  <button className={`glass-button ${layoutType === 'mini-cover' ? 'primary' : ''}`} onClick={() => setLayoutType('mini-cover')}>{texts.layoutMiniCover}</button>
+                  <button className={`glass-button ${layoutType === 'title' ? 'primary' : ''}`} onClick={() => setLayoutType('title')}>{texts.layoutTitle}</button>
                 </div>
               </div>
               
@@ -129,45 +172,45 @@ function App() {
               {(layoutType === 'mini-cover' || (layoutType === 'clean' && ['circle', 'wave-circle', 'pulse'].includes(selectedStyle))) && (
                 <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div>
-                    <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Album Cover Image</h5>
+                    <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.addCover}</h5>
                     <ImageUploader onImageAdded={(img) => setAlbumCover(img)} />
-                    {albumCover && <span style={{ color: 'var(--success)', marginLeft: '1rem', fontSize: '0.9rem' }}>✓ Image loaded</span>}
+                    {albumCover && <span style={{ color: 'var(--success)', marginLeft: '1rem', fontSize: '0.9rem' }}>✓ {texts.coverSelected}</span>}
                   </div>
                   
                   {layoutType === 'mini-cover' && (
                     <div>
-                      <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Alignment</h5>
+                      <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.alignment}</h5>
                       <div style={{ display: 'flex', gap: '1rem' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input type="radio" name="coverPos" checked={coverPosition === 'left'} onChange={() => setCoverPosition('left')} /> Left
+                          <input type="radio" name="coverPos" checked={coverPosition === 'left'} onChange={() => setCoverPosition('left')} /> {texts.left}
                         </label>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                          <input type="radio" name="coverPos" checked={coverPosition === 'right'} onChange={() => setCoverPosition('right')} /> Right
+                          <input type="radio" name="coverPos" checked={coverPosition === 'right'} onChange={() => setCoverPosition('right')} /> {texts.right}
                         </label>
                       </div>
                     </div>
                   )}
 
                   <div>
-                    <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Image Shape</h5>
+                    <h5 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.imageShape}</h5>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input type="radio" name="imgShape" checked={imageShape === 'square'} onChange={() => setImageShape('square')} /> Square
+                        <input type="radio" name="imgShape" checked={imageShape === 'square'} onChange={() => setImageShape('square')} /> {texts.square}
                       </label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input type="radio" name="imgShape" checked={imageShape === 'rounded'} onChange={() => setImageShape('rounded')} /> Rounded
+                        <input type="radio" name="imgShape" checked={imageShape === 'rounded'} onChange={() => setImageShape('rounded')} /> {texts.rounded}
                       </label>
                       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                        <input type="radio" name="imgShape" checked={imageShape === 'circle'} onChange={() => setImageShape('circle')} /> Circle
+                        <input type="radio" name="imgShape" checked={imageShape === 'circle'} onChange={() => setImageShape('circle')} /> {texts.circle}
                       </label>
                     </div>
                   </div>
                 </div>
               )}
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>4. Custom Color</h4>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step4}</h4>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', flex: 1 }}>
                     <input 
                       type="color" 
@@ -183,15 +226,15 @@ function App() {
                         background: 'none'
                       }}
                     />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: '500' }}>Primary Hue</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Affects gradients, neon glow, and particles</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                      <span style={{ fontWeight: '500', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{texts.primaryHue}</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{texts.hueDesc}</span>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>5. Title Font</h4>
+                  <h4 style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>{texts.step5}</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', flex: 1, justifyContent: 'center' }}>
                     <select 
                       value={titleFont} 
@@ -221,12 +264,30 @@ function App() {
                 </div>
               </div>
               
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
+                <button 
+                  className="glass-button" 
+                  onClick={() => startBatchExport('webm')}
+                  disabled={isBatchExporting}
+                >
+                  {isBatchExporting ? '...' : `⬇️ BATCH: ${texts.instant}`}
+                </button>
+                <button 
+                  className="glass-button primary" 
+                  onClick={() => startBatchExport('mp4')}
+                  disabled={isBatchExporting}
+                >
+                  {isBatchExporting ? 'BATCH EXPORTING (PLEASE WAIT)...' : `⬇️ BATCH: ${texts.mp4}`}
+                </button>
+              </div>
+
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               {audioFiles.map((file, index) => (
                 <VisualizerPreview 
                   key={`${file.name}-${index}`} 
+                  ref={el => previewRefs.current[index] = el}
                   file={file} 
                   styleType={selectedStyle}
                   layoutType={layoutType}
@@ -237,6 +298,7 @@ function App() {
                   titleFont={titleFont}
                   imageShape={imageShape}
                   onRemove={() => removeTrack(index)}
+                  texts={texts}
                 />
               ))}
             </div>
