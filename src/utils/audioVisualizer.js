@@ -201,6 +201,12 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   const numVisualBands = 120;
   const activeDataArray = getLogarithmicFrequencies(dataArray, numVisualBands);
 
+  // V12 Custom Amplitude Scaling 
+  const ampScalar = config.amplitude !== undefined ? config.amplitude : 1.0;
+  for (let i = 0; i < activeDataArray.length; i++) {
+    activeDataArray[i] = activeDataArray[i] * ampScalar;
+  }
+
   // Sub-bass extraction for FX constraints
   let subBassSum = 0;
   for(let i=0; i<6; i++) {
@@ -249,29 +255,7 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
       vW = width - (paddingX * 2);
       vH = height - (paddingY * 2);
       
-      // Circle Cover Logic
-      if (albumImg && (style === 'circle' || style === 'wave-circle' || style === 'pulse') && scaleY === 1) {
-        const radius = Math.min(vW, vH) * 0.25;
-        ctx.save();
-        ctx.beginPath();
-        ctx.globalAlpha = fadeAlpha;
-        
-        const shape = config.imageShape || 'circle';
-        if (shape === 'square') {
-          const r = 10 * (height / 1080);
-          ctx.roundRect((width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2, r);
-        } else if (shape === 'rounded') {
-          const r = Math.min(60 * (height / 1080), radius);
-          ctx.roundRect((width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2, r);
-        } else {
-          // Default circle for circular visualizers
-          ctx.arc(width / 2, height / 2, radius * 0.95, 0, 2 * Math.PI); 
-        }
-        
-        ctx.clip();
-        ctx.drawImage(albumImg, (width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2);
-        ctx.restore();
-      }
+      // Circle Cover Logic (Moved to Immune UI section at end of file)
 
     } else if (layout === 'mini-cover') {
       const padding = height * 0.15;
@@ -281,50 +265,7 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
       const coverXLeft = width * 0.1;
       const coverXRight = width - coverSize - (width * 0.1);
       
-      const imageX = coverPosition === 'right' ? coverXRight : coverXLeft;
-      
-      if (albumImg && scaleY === 1) { 
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
-        ctx.shadowBlur = Math.floor(30 * (height / 1080));
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = Math.floor(15 * (height / 1080));
-        
-        ctx.save();
-        ctx.beginPath();
-        ctx.globalAlpha = fadeAlpha;
-        
-        const shape = config.imageShape || 'square';
-        if (shape === 'circle') {
-          ctx.arc(imageX + coverSize/2, coverY + coverSize/2, coverSize/2, 0, Math.PI * 2);
-        } else if (shape === 'rounded') {
-          const rad = Math.min(60 * (height / 1080), coverSize / 2);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
-        } else {
-          const rad = 10 * (height / 1080);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
-        }
-        
-        ctx.clip();
-        ctx.drawImage(albumImg, imageX, coverY, coverSize, coverSize);
-        ctx.restore();
-        ctx.shadowBlur = 0;
-      } else if (scaleY === 1) {
-        ctx.fillStyle = '#1e293b';
-        ctx.globalAlpha = fadeAlpha;
-        
-        ctx.beginPath();
-        const shape = config.imageShape || 'square';
-        if (shape === 'circle') {
-          ctx.arc(imageX + coverSize/2, coverY + coverSize/2, coverSize/2, 0, Math.PI * 2);
-        } else if (shape === 'rounded') {
-          const rad = Math.min(60 * (height / 1080), coverSize / 2);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
-        } else {
-          const rad = 10 * (height / 1080);
-          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
-        }
-        ctx.fill();
-      }
+      // Mini-cover image drawing moved to Immune UI section at end of file
 
       vX = coverPosition === 'right' ? padding * 2 : coverXLeft + coverSize + (width * 0.05);
       vY = padding * 1.5;
@@ -402,6 +343,82 @@ export const drawVisualizer = (canvas, analyser, dataArray, config) => {
   }
 
   // --- UI OVERLAYS (Immune to FX) ---
+  
+  // 1. Draw Images Immune to FX so they don't get destroyed by Pixelate/VHS
+  if (layout === 'clean' && albumImg && (style === 'circle' || style === 'wave-circle' || style === 'pulse')) {
+      const paddingX = width * 0.1;
+      const paddingY = height * 0.1;
+      const vW = width - (paddingX * 2);
+      const vH = height - (paddingY * 2);
+      const radius = Math.min(vW, vH) * 0.25;
+      
+      ctx.save();
+      ctx.beginPath();
+      
+      const shape = config.imageShape || 'circle';
+      if (shape === 'square') {
+        const r = 10 * (height / 1080);
+        ctx.roundRect((width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2, r);
+      } else if (shape === 'rounded') {
+        const r = Math.min(60 * (height / 1080), radius);
+        ctx.roundRect((width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2, r);
+      } else {
+        ctx.arc(width / 2, height / 2, radius * 0.95, 0, 2 * Math.PI); 
+      }
+      
+      ctx.clip();
+      ctx.drawImage(albumImg, (width / 2) - radius, (height / 2) - radius, radius * 2, radius * 2);
+      ctx.restore();
+
+  } else if (layout === 'mini-cover') {
+      const coverSize = height * 0.35; 
+      const coverY = (height - coverSize) / 2; 
+      const coverXLeft = width * 0.1;
+      const coverXRight = width - coverSize - (width * 0.1);
+      const imageX = coverPosition === 'right' ? coverXRight : coverXLeft;
+
+      if (albumImg) { 
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.2)';
+        ctx.shadowBlur = Math.floor(30 * (height / 1080));
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = Math.floor(15 * (height / 1080));
+        
+        ctx.save();
+        ctx.beginPath();
+        
+        const shape = config.imageShape || 'square';
+        if (shape === 'circle') {
+          ctx.arc(imageX + coverSize/2, coverY + coverSize/2, coverSize/2, 0, Math.PI * 2);
+        } else if (shape === 'rounded') {
+          const rad = Math.min(60 * (height / 1080), coverSize / 2);
+          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+        } else {
+          const rad = 10 * (height / 1080);
+          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+        }
+        
+        ctx.clip();
+        ctx.drawImage(albumImg, imageX, coverY, coverSize, coverSize);
+        ctx.restore();
+        ctx.shadowBlur = 0;
+      } else {
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        const shape = config.imageShape || 'square';
+        if (shape === 'circle') {
+          ctx.arc(imageX + coverSize/2, coverY + coverSize/2, coverSize/2, 0, Math.PI * 2);
+        } else if (shape === 'rounded') {
+          const rad = Math.min(60 * (height / 1080), coverSize / 2);
+          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+        } else {
+          const rad = 10 * (height / 1080);
+          ctx.roundRect(imageX, coverY, coverSize, coverSize, rad);
+        }
+        ctx.fill();
+      }
+  }
+
+  // 2. Draw Title Text
   if (layout === 'title') {
     const isBarsDown = style === 'bars-down';
     const titleYFactor = isBarsDown ? 0.35 : 0.55;

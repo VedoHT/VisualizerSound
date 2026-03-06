@@ -33,6 +33,7 @@ function App() {
   const [customHexColor, setCustomHexColor] = useState('#c084fc');
   const [titleFont, setTitleFont] = useState('Montserrat');
   const [imageShape, setImageShape] = useState('square');
+  const [amplitude, setAmplitude] = useState(1.0);
   const [lang, setLang] = useState('pt'); // Default to PT as requested
 
   const texts = t[lang];
@@ -123,6 +124,23 @@ function App() {
                   <button className={`glass-button ${selectedStyle === 'circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('circle')}>{texts.styleCircle}</button>
                   <button className={`glass-button ${selectedStyle === 'wave-circle' ? 'primary' : ''}`} onClick={() => setSelectedStyle('wave-circle')}>{texts.styleWaveCircle}</button>
                   <button className={`glass-button ${selectedStyle === 'pulse' ? 'primary' : ''}`} onClick={() => setSelectedStyle('pulse')}>{texts.stylePulse}</button>
+                </div>
+                
+                <div style={{ marginTop: '1.5rem', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: '500' }}>{texts.amplitude}</span>
+                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{Math.round(amplitude * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.1" 
+                    max="2.5" 
+                    step="0.1" 
+                    value={amplitude} 
+                    onChange={(e) => setAmplitude(parseFloat(e.target.value))}
+                    style={{ width: '100%', accentColor: 'var(--primary)' }}
+                  />
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{texts.amplitudeDesc}</p>
                 </div>
               </div>
 
@@ -297,6 +315,7 @@ function App() {
                   customHexColor={customHexColor}
                   titleFont={titleFont}
                   imageShape={imageShape}
+                  amplitude={amplitude}
                   onRemove={() => removeTrack(index)}
                   texts={texts}
                 />

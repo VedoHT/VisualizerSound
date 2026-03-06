@@ -47,6 +47,9 @@ export const t = {
     primaryHue: "Primary Hue",
     hueDesc: "Affects gradients, neon glow, and particles",
 
+    amplitude: "Bar Amplitude / Height",
+    amplitudeDesc: "Adjust the maximum height of the soundwave",
+
     trackDesc: "Select MP3 or WAV files.",
     addAudio: "Add Audio Track(s) +",
     addCover: "Add Album Cover (Optional)",
@@ -110,6 +113,9 @@ export const t = {
 
     primaryHue: "Cor Primária",
     hueDesc: "Afeta os gradientes, brilho neon e partículas",
+
+    amplitude: "Amplitude / Altura da Barra",
+    amplitudeDesc: "Ajusta a altura máxima vertical da onda sonora",
 
     trackDesc: "Selecione arquivos MP3 ou WAV.",
     addAudio: "Adicionar Faixa(s) de Áudio +",
